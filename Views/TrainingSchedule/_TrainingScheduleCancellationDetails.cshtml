@@ -1,0 +1,98 @@
+<div class="form-group row">
+    <label for="dd_CancellationType" class="col-sm-4 col-form-label">Cancellation Type:</label>
+    <div class="col-sm-8">
+        @(Html.Kendo().DropDownList()
+            .Name("dd_CancellationType")
+            .HtmlAttributes(new { @class = "required-field" })
+            .Enable(true)
+            .BindTo(
+            new List<string>(){
+                "",
+                "CANCEL TRAINING",
+                "RESCHEDULE TRAINING"
+                }
+            )
+            )
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-sm-4 col-form-label">Reason:</label>
+    <div class="col-sm-8">
+        @* <textarea rows="3" class="form-control required-field" placeholder="Reason" id="txtReason"></textarea> *@
+        @(Html.Kendo().TextArea()
+            .Name("txtReason")
+            .Placeholder("Reason")
+            .Rows(4)
+            .Enable(true)                      
+            .HtmlAttributes(new { style = "width: 100%", @class = "required-field", data_required_msg = "Reason", data_max_msg= "Enter value between 1 and 200" })
+        )
+    </div>
+</div>
+<div class="card-footer">
+    <div class="float-right">
+        <button type="submit" class="btn btn-default" onclick="CloseCancelWindow()">Cancel</button>
+        <button type="submit" class="btn btn-info" onclick="ConfirmTrainingCancellation()">Confirm</button>        
+    </div>    
+</div>
+
+<script>
+
+    async function ConfirmTrainingCancellation() {
+
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }
+
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Are you sure you want to cancel the selected training?");
+
+        //If user clicked NO, proceed below
+        if (result !== true) {
+            return;//exit
+        }
+
+        var _reason = $("#txtReason").val();
+        var _cancellationType = $("#dd_CancellationType").val();
+        
+        $.post('@Url.Action("CancelSchedule", "TrainingSchedule")', { paramCode:g_trainingCode, paramReason: _reason, paramCancellationType: _cancellationType })
+            .fail(
+                function (res) {
+                    $mong.kendoAlertInfo(res.responseText);
+                    return
+                }
+            )
+            .done(
+                function (data) {
+                    $("#window_trainingCancellation").data("kendoWindow").close();
+                    var grid = $("#grid_trainingScheduleList").data("kendoGrid");
+
+                    var scheduler = $("#scheduler_trainingSchedule").data("kendoScheduler");
+                    scheduler.refresh();
+                    scheduler.dataSource.read();
+
+                    grid.dataSource.read().then(function () {
+                        grid.refresh();
+                    });
+
+                    
+                    if(data.IsEmail){
+                        // Construct the mailto link
+                        var cc = (data.EmailCC != ""? "&cc="+data.EmailCC: "");
+                        var bcc = (data.EmailBCC != ""? "&bcc="+data.EmailBCC: "");
+                    
+                        window.location.href = "mailto:" + data.EmailTo                     
+                            + "?subject=" + data.EmailSubject 
+                            + "&body=" + data.EmailBody
+                            + cc
+                            + bcc;
+                    }
+
+                    $mong.kendoAlertInfo("Training successfully cancelled.");
+                    return
+                }
+            )
+    }
+
+</script>

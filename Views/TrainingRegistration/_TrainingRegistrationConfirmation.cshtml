@@ -1,0 +1,66 @@
+<div class="form-group row">
+    <label class="col-sm-2 col-form-label">Reason for denying:</label>
+    <div class="col-sm-10">
+        @* <textarea rows="3" class="form-control required-field" placeholder="Reason" id="txtReason"></textarea> *@
+        @(Html.Kendo().TextArea()
+            .Name("txtReason")
+            .Placeholder("Reason for denying")
+            .Rows(4)
+            .Enable(true)                      
+            .HtmlAttributes(new { style = "width: 100%", @class = "required-field", data_required_msg = "Reason", data_max_msg= "Enter value between 1 and 200" })
+        )
+    </div>
+</div>
+<div class="card-footer">
+    <div class="float-right">        
+        <button type="submit" class="btn btn-default" onclick="CloseCancelWindow()">Cancel</button>
+        <button type="submit" class="btn btn-info" onclick="ConfirmRegistrationCancellation()">Save</button>
+    </div>
+</div>
+
+<script>
+
+    async function ConfirmRegistrationCancellation() {
+
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }
+
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Are you sure you want to deny the changes in the training schedule?");
+
+        //If user clicked NO, proceed below
+        if (result !== true) {
+            return;//exit
+        }
+
+        var _reason = $("#txtReason").val();
+        
+        $.post('@Url.Action("ConfirmRegistration", "TrainingRegistration")', { paramCode:g_registrationCode, paramReason: _reason, paramConfirm: "Deny" })
+            .fail(
+                function (res) {
+                    $mong.kendoAlertInfo(res.responseText);
+                    return
+                }
+            )
+            .done(
+                function (data) {
+                    $("#window_trainingCancellation").data("kendoWindow").close();
+                    var grid = $("#grid_trainingRegistrationList").data("kendoGrid"); 
+                    
+                    var scheduler = $("#scheduler_trainingSchedule").data("kendoScheduler");
+                    scheduler.refresh();
+                    scheduler.dataSource.read();
+
+                    grid.dataSource.read().then(function () {
+                        grid.refresh();
+                    });
+                    $mong.kendoAlertInfo("Successfully denied.");      
+                    return
+                }
+            )
+    }
+
+</script>
