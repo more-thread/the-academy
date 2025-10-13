@@ -262,7 +262,7 @@ public class TrainingMonitoringController : Controller
                 }
 
                        
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +                                        
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                                        
                     $"Congratulations on finishing the training course on,{_schedule.TrainingCode} - {_schedule.Course.CourseTitle}.<br>" +
                     "As part of our training analysis, we are conducting a training feedback to determine this training's effectiveness. In this regard, we urge you to complete the form as honestly as possible.<br>" +
                     "Kindly visit the Training Feedback Form through the Registar System.<br>" +

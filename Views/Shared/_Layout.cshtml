@@ -77,6 +77,7 @@
                 border-color: #f4a434 !important;
                 color: white !important;
             }
+
         </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed @(darkmode == "yes" ? "dark-mode" : "")">
@@ -347,6 +348,18 @@
 </html>
 
 <script>
+    function window_details_Resize(e) {
+        debugger
+        var wnd = $("#window_details").data("kendoWindow");
+        var $wrapper = wnd.wrapper;
+        var browserHeight = window.innerHeight;
+        var windowHeight = $wrapper.height();
+
+        // Only set height if window is taller than browser
+        if (windowHeight > browserHeight) {
+            wnd.setOptions({ height: browserHeight });
+        }
+    }
 
     var getTrainingCourseDescriptionByCodeUrl = '@Url.Action("GetTrainingCourseDescriptionByCode", "TrainingSchedule")',
     getTrainingProgramJobClassesByCodeUrl = '@Url.Action("GetTrainingProgramJobClassesByCode", "TrainingProgramAndCourse")';
@@ -525,6 +538,15 @@
 
             }
       });
+    });
+        $(function() {
+        $('button.k-toolbar-button').filter(function() {
+            return $(this).text().trim() === 'Apply Filters';
+        }).css({
+            'background-color': '#f4a434',
+            'border-color': '#f4a434',
+            'color': 'white'
+        });
     });
 </script>
 

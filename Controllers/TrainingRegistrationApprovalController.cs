@@ -115,7 +115,7 @@ namespace TRS.Controllers
                     _trainingRegistration.RegistrationApprovedDate = _globalService.GetDateTime();
 
                     //New Registration - For Confirmation
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +                    
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                    
                     $"This is to inform you that your registration to this training, <b>{paramRegistrationCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been approved.<br>" +
                     "Training Coordinators will review and confirm your registration.<br><br>" +
                     "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
@@ -146,7 +146,7 @@ namespace TRS.Controllers
                     _trainingRegistration.RegistrationDisapprovedDate = _globalService.GetDateTime();
 
                     //New Registration - For Confirmation
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +                                        
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                                        
                     $"This is to inform you that your registration to this training, <b>{paramRegistrationCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been disapproved due to this reason: {paramReason}.<br><br>" +
                     "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
                     ;

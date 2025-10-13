@@ -56,8 +56,11 @@ namespace TRS.Global
                 var toWrapped = to != null ? $"'{to}'" : "NULL";
                 var ccWrapped = cc != null ? $"'{cc}'" : "NULL";
                 var bccWrapped = bcc != null ? $"'{bcc}'" : "NULL";
+                // Escape single quotes in html and subject for SQL
+                var htmlEscaped = html?.Replace("'", "''");
+                var subjectEscaped = subject?.Replace("'", "''");
 
-                var sql = $"EXEC TRS.sp_Global_SendEmail {toWrapped}, {ccWrapped}, {bccWrapped}, '{html}', '{subject}'";
+                var sql = $"EXEC TRS.sp_Global_SendEmail {toWrapped}, {ccWrapped}, {bccWrapped}, '{htmlEscaped}', '{subjectEscaped}'";
                 var forms = _context.Database.ExecuteSqlRaw(sql);
             }
             catch (Exception ex)    
@@ -140,7 +143,13 @@ namespace TRS.Global
             var result = _context.VwHrEmployeeInfos.ToList();
             return result;
         }
-        
+
+        public List<UserLogs> GetLogs()
+        {
+            var result = _context.tUserLogs.ToList();
+            return result;
+        }
+
         public void Log(string message, Dictionary<string,string> audit, Exception exception = null){            
             
             var errMsg = "";

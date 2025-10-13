@@ -175,7 +175,7 @@ namespace TRS.Controllers
                 if(EmployeeLevel <= 5){
 
                     //New Registration - For Approval
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                     $"This is to inform you that {_empDetails.EmployeeName} has registered to this training,<br>" +
                     $"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
                     "Your approval is required to proceed with the registration.<br><br>" +
@@ -193,7 +193,7 @@ namespace TRS.Controllers
                 }else{
 
                     //New Registration - For Confirmation
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                     $"This is to inform you that you have been registered to this training,<br>" +
                     $"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
                     "Training Coordinators will review and confirm your registration.<br><br>" +

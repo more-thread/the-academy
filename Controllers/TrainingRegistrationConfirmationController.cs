@@ -171,7 +171,7 @@ namespace TRS.Controllers
                         _trainingSchedule.RegistrationStatus = "CLOSED";
 
                     //Registration-Confirmed (Individual)
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                     $"This is to inform you that your registration to this training, <b>{_trainingRegistration.TrainingSchedule.TrainingCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b>, has been confirmed.<br>" +
                     "Your attendance is highly appreciated.<br><br>" +
                     "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the details of your training and registrations.</p>"
@@ -199,7 +199,7 @@ namespace TRS.Controllers
 
                      
                     //Registration-Rejected (Individual)
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +     
+                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +     
                     $"This is to inform you that your registration to this training, <b>{_trainingRegistration.TrainingSchedule.TrainingCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been rejected due to this reason: {paramReason}.<br><br>" +
                     "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the details of your training and registrations.</p>"
                     ;
@@ -292,7 +292,7 @@ namespace TRS.Controllers
                 
                 
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                 
                 $"This is to inform you that your registration to this training, <b>{_trainingSchedule.TrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>, has been confirmed.<br>" +
                 "Your attendance is highly appreciated.<br><br>" +
@@ -325,7 +325,7 @@ namespace TRS.Controllers
                 TrainingSchedule _trainingSchedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramCode);
                     
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                 
                 $"This is to remind you of your training about <b>{_trainingSchedule.TrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>, scheduled on {_trainingSchedule.StartDate.ToShortDateString()} - {_trainingSchedule.EndDate.ToShortDateString()} at {_trainingSchedule.StartTime} - {_trainingSchedule.EndTime}.<br><br>" +
                 "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the details of your training and registrations.</p>"
@@ -370,7 +370,7 @@ namespace TRS.Controllers
                 TrainingRegistration _trainingRegistration = await _trainingRegistrationService.GetTrainingRegistrationByCode(paramRegistrationCode);
                     
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                 
                 $"This is to remind you that there were changes in the schedule of this training, <b>{_trainingRegistration.TrainingSchedule.TrainingCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b>, that you registered.<br><br>" +
                 "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the changes and confirm your attendance with the new schedule.</p>"
@@ -417,7 +417,7 @@ namespace TRS.Controllers
                 
                 TrainingSchedule _trainingSchedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(trainingCode);
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                 
                 $"This is to inform you that your registration to this training, <b>{_trainingSchedule.TrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>, has been confirmed.<br>" +
                 "Your attendance is highly appreciated.<br><br>" +
@@ -464,7 +464,7 @@ namespace TRS.Controllers
                 
                 TrainingSchedule _trainingSchedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(trainingCode);
                 //Registration-Rejected (Group)
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                 
                 $"This is to inform you that your registration to this training, <b>{_trainingSchedule.TrainingCode} - {_trainingSchedule.Course.CourseTitle}</b> has been rejected due to this reason: {reason}.<br><br>" +
                 "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"

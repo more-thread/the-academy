@@ -330,7 +330,7 @@ namespace TRS.Controllers
 
                 
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
+                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
                 $"This is to inform you that you have been registered to this training,<br>" +
                 $"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
                 "Training Coordinators will review and confirm your registration.<br><br>" +

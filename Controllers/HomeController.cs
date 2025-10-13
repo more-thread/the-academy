@@ -43,6 +43,7 @@ namespace TRS.Controllers
                     //id = "1002746"; //jerose
                     //id = "1025474"; //erol
                     //id = "1023691"; //eloah
+                    //id = "1026092"; //eloah
                     HttpContext.Session.SetString("SessionEmployeeNo", id);
                     return RedirectToAction("Index", "Home");
                 }
