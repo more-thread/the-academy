@@ -330,13 +330,13 @@ namespace TRS.Controllers
 
                 
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
-                $"This is to inform you that you have been registered to this training,<br>" +
-                $"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
-                "Training Coordinators will review and confirm your registration.<br><br>" +
-                "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
-                ;
-                var subject = "Training - New Registration For Confirmation";
+                //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
+                //$"This is to inform you that you have been registered to this training,<br>" +
+                //$"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
+                //"Training Coordinators will review and confirm your registration.<br><br>" +
+                //"Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
+                //;
+                //var subject = "Training - New Registration For Confirmation";
                 
                 VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(paramEmployeeNo);
                 var superiorEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SuperiorId.ToString()).EmailAddress;
@@ -353,8 +353,15 @@ namespace TRS.Controllers
 
                 var to_recipient = _empDetails.EmailAddress;
                 var copy_recipient =  string.Join(";", coordinatorEmails) +";"+superiorEmail + ";" + sectionHeadEmail;
+
+                var template = EmailTemplates.Get("RegistrationForConfirmation");
+                var html = EmailTemplates.FillTemplate(template.HtmlBody, new Dictionary<string, string>
+                {
+                    ["TrainingCode"] = paramTrainingCode,
+                    ["CourseTitle"] = _trainingSchedule.Course.CourseTitle
+                });
                 
-                _globalService.SendEmail(htmlString,subject,to_recipient,copy_recipient,null);
+                _globalService.SendEmail(html, template.Subject, to_recipient,copy_recipient,null);
             }
             catch (System.Exception ex)
             {

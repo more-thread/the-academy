@@ -262,31 +262,38 @@ public class TrainingMonitoringController : Controller
                 }
 
                        
-                    var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                                        
-                    $"Congratulations on finishing the training course on,{_schedule.TrainingCode} - {_schedule.Course.CourseTitle}.<br>" +
-                    "As part of our training analysis, we are conducting a training feedback to determine this training's effectiveness. In this regard, we urge you to complete the form as honestly as possible.<br>" +
-                    "Kindly visit the Training Feedback Form through the Registar System.<br>" +
-                    "Your sincere and constructive feedback will help us assess the relevance of this program and develop future courses customized to our company's needs. <br>" +
-                    "We appreciate your time and effort in providing us with your feedback.</p>"
-                    ;
-                    var subject = "Training - Training Feedback";
+                //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                                        
+                //$"Congratulations on finishing the training course on,{_schedule.TrainingCode} - {_schedule.Course.CourseTitle}.<br>" +
+                //"As part of our training analysis, we are conducting a training feedback to determine this training's effectiveness. In this regard, we urge you to complete the form as honestly as possible.<br>" +
+                //"Kindly visit the Training Feedback Form through the Registar System.<br>" +
+                //"Your sincere and constructive feedback will help us assess the relevance of this program and develop future courses customized to our company's needs. <br>" +
+                //"We appreciate your time and effort in providing us with your feedback.</p>"
+                //;
+                //var subject = "Training - Training Feedback";
 
-                    var traineeList = await _trainingRegistrationService.GetTraineeListByCode(_schedule.TrainingCode);
+                var traineeList = await _trainingRegistrationService.GetTraineeListByCode(_schedule.TrainingCode);
 
-                    var traineeEmail = traineeList.Select(e => e.EmployeeInfo.EmailAddress);
+                var traineeEmail = traineeList.Select(e => e.EmployeeInfo.EmailAddress);
                         
-                    var _coordinatorList = await _trainingCoordinatorService.GetTrainingCoordinatorList();
-                    var coordinatorEmails = _globalService.GetEmployeeList()
-                                            .Join(_coordinatorList, 
-                                                e => e.EmployeeNo, 
-                                                c => c.EmployeeNo, 
-                                                (e, c) => e.EmailAddress)
-                                            .ToList();
+                var _coordinatorList = await _trainingCoordinatorService.GetTrainingCoordinatorList();
+                var coordinatorEmails = _globalService.GetEmployeeList()
+                                        .Join(_coordinatorList, 
+                                            e => e.EmployeeNo, 
+                                            c => c.EmployeeNo, 
+                                            (e, c) => e.EmailAddress)
+                                        .ToList();
 
-                    var copy_recipient = string.Join(";", coordinatorEmails);
-                    var blind_recipient = string.Join(";", traineeEmail);
-                    
-                    _globalService.SendEmail(htmlString,subject,null,copy_recipient,blind_recipient);
+                var copy_recipient = string.Join(";", coordinatorEmails);
+                var blind_recipient = string.Join(";", traineeEmail);
+
+                var template = EmailTemplates.Get("TrainingFeedback");
+                var html = EmailTemplates.FillTemplate(template.HtmlBody, new Dictionary<string, string>
+                {
+                    ["TrainingCode"] = _schedule.TrainingCode,
+                    ["CourseTitle"] = _schedule.Course.CourseTitle
+                });
+
+                _globalService.SendEmail(html, template.Subject, null,copy_recipient,blind_recipient);
 
             }
             catch (Exception ex)

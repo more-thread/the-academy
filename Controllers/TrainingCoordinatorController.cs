@@ -114,8 +114,6 @@ namespace TRS.Controllers
             {
                 TrainingCoordinator _details = await _trainingCoordinatorService.GetTrainingCoordinatorByEmployeeNo(paramEmployeeNo);
 
-                
-
                 _details.Status =  paramStatus == "Active"? true: false;
                 _details.ModifiedBy = auditTrail["UserID"];
                 _details.ModifiedByComputerUsed = auditTrail["HostName"];
