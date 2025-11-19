@@ -7,7 +7,7 @@ trigger:
 - none
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'app-pool-jsr'
 
 variables:
   solution: '**/TRS.sln'
