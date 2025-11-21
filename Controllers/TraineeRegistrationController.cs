@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
 using System.Diagnostics;
+using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
@@ -10,6 +11,7 @@ using TRS.ViewModels;
 
 namespace TRS.Controllers
 {
+    [ValidateSession]
     public class TraineeRegistrationController : Controller
     {
         private readonly ILogger<TraineeRegistrationController> _logger;
@@ -43,8 +45,7 @@ namespace TRS.Controllers
             _jobclassService = jobclassService;   
             _trainingRegistrationService = trainingRegistrationService;
         }
-
-        [AccessService(ControllerName = "TraineeRegistration")]
+        [ValidateAccess(ControllerName = "TraineeRegistration")]
         public IActionResult Index()
         {
             _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}",auditTrail);

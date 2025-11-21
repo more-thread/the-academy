@@ -9,6 +9,7 @@ using TRS.Models;
 using System.Security.Cryptography;
 using System.Text;
 using Telerik.SvgIcons;
+using TRS.Services;
 
 namespace TRS.Controllers
 {
@@ -17,102 +18,181 @@ namespace TRS.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly GlobalService _globalService;
         private readonly IHttpContextAccessor _accessor;
-        public HomeController(ILogger<HomeController> logger,
-        GlobalService globalService,
-        IHttpContextAccessor accessor
-        )
+        private readonly IEmployeeAuthenticationService _authService;
+        private readonly ISessionService _sessionService;
+
+        public HomeController(
+            ILogger<HomeController> logger,
+            GlobalService globalService,
+            IHttpContextAccessor accessor,
+            IEmployeeAuthenticationService authService,
+            ISessionService sessionService)
         {
             _globalService = globalService;      
             _logger = logger;
             _accessor = accessor;
+            _authService = authService;
+            _sessionService = sessionService;
         }
-        public IActionResult Crypto()
+
+        public async Task<IActionResult> Crypto()
         {
             try
             {
                 var idno = RouteData.Values["id"] + Request.QueryString.ToString();
-                //idno = "test";
-                var id = "";
-                if (idno.Length > 0)
+                var getid = idno.Substring(4, idno.Length - 4);
+
+                if (string.IsNullOrEmpty(getid))
                 {
-                    var getid = idno.Substring(4, idno.Length - 4);
-                    id = Decrypt(getid).ToString();
-                    //id = "1019241"; //jera
-                    //id = "1025434"; //arjay
-                    //id = "1023719"; //froy                   
-                    //id = "1002746"; //jerose
-                    //id = "1025474"; //erol
-                    //id = "1023691"; //eloah
-                    //id = "1026092"; //eloah
-                    HttpContext.Session.SetString("SessionEmployeeNo", id);
-                    return RedirectToAction("Index", "Home");
+                    _logger.LogWarning("Crypto action called without id parameter");
+                    return RedirectToAction("Error");
                 }
-                else
+
+                var employeeNo = await _authService.ValidateAndDecryptEmployeeIdAsync(getid);
+
+                if (string.IsNullOrEmpty(employeeNo))
                 {
-                    return Redirect(Url.Action("Error", "Home"));
+                    _logger.LogWarning("Invalid or expired authentication token");
+                    return RedirectToAction("Error");
                 }
+
+
+                //var employeeNo = "1019241";
+
+                var user = _globalService.GetUserInfo(employeeNo);
+                if (user?.UserID == null)
+                {
+                    _logger.LogWarning("User not found for employee: {EmployeeNo}", employeeNo);
+                    return RedirectToAction("Error");
+                }
+
+                await _sessionService.CreateUserSessionAsync(user);
+                
+                _logger.LogInformation("Employee authenticated successfully: {EmployeeNo}", employeeNo);
+                
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                return Redirect(Url.Action("Error", "Home"));
-                // Handle the exception...
+                _logger.LogError(ex, "Error in Crypto authentication");
+                return RedirectToAction("Error");
             }
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             try
             {
-                string employeeNo = HttpContext?.Session?.GetString("SessionEmployeeNo");
-                UserInfo user = _globalService.GetUserInfo(employeeNo);
-
-                if (user.UserID == null)
+                // Check if session is valid using SessionService
+                if (!_sessionService.IsSessionValid())
                 {
-                    return Redirect(Url.Action("Error", "Home"));
+                    _logger.LogWarning("Invalid or expired session");
+                    return RedirectToAction("Timeout");
                 }
 
-                HttpContext.Session.SetString("SessionUserID", user.UserID);
-                HttpContext.Session.SetString("SessionFullName", user.FullName);
-                HttpContext.Session.SetString("SessionDesignation", user.PositionName);
-                HttpContext.Session.SetString("SessionSectionName", user.SectionName);
-
-                if (user.DisplayPic.ToString() != "")
+                var employeeNo = _sessionService.GetCurrentEmployeeNo();
+                
+                // If no employee number in session, redirect to login
+                if (string.IsNullOrEmpty(employeeNo))
                 {
-                    string imageDataURL = string.Format("data:image/png;base64,{0}",
-                    Convert.ToBase64String(user.DisplayPic));
-                    
-                    HttpContext.Session.SetString("SessionDisplayPic", imageDataURL);
+                    return RedirectToAction("Timeout");
                 }
-                List<FormAccess> formAccesses = _globalService.GetUserAccess(user.EmpID);
 
+                // Get user access permissions
+                var formAccesses = _globalService.GetUserAccess(employeeNo);
                 if (formAccesses.Count == 0)
                 {
-                    return Redirect(Url.Action("Error", "Home"));
+                    _logger.LogWarning("No form access found for user: {EmployeeNo}", employeeNo);
+                    return RedirectToAction("AccessDenied");
                 }
 
-                FormService.GetForms(user.EmpID, formAccesses);
-                MenuService.GetMenuItem(user.EmpID);
+                // Initialize form and menu services
+                FormService.GetForms(employeeNo, formAccesses);
+                MenuService.GetMenuItem(employeeNo);
 
-                var auditTrail = new Dictionary<string, string>{
-                    {"HostName", _accessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString()},
-                    {"UserID", user.UserID},
-                    {"LoggedEmployeeNo", user.EmpID}
-                };
-
+                // Log page visit using SessionService audit trail helper
+                var auditTrail = _sessionService.GetAuditTrail();
                 _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail);
-                return View(); 
-                    
-            }
-            catch (System.Exception)
-            {
-                
-                return Redirect(Url.Action("Error", "Home"));
-                throw;
-            }
 
-                       
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Index action");
+                return RedirectToAction("Error");
+            }
         }
 
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+        
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+        public IActionResult Timeout()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        [HttpPost]
+        public ActionResult SetTheme(string selection)
+        {
+            if (string.IsNullOrEmpty(selection))
+                return BadRequest("Invalid theme selection");
+
+            var cookieOptions = new CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(365),
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict
+            };
+
+            Response.Cookies.Append("theme", selection, cookieOptions);
+            var returnUrl = Request.Headers["Referer"].ToString();
+
+            return Json(new { result = "Redirect", url = returnUrl });
+        }
+
+        [HttpPost]
+        public IActionResult SetDarkMode(string selection)
+        {
+            if (string.IsNullOrEmpty(selection))
+                return BadRequest("Invalid dark mode selection");
+
+            var cookieOptions = new CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(365),
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict
+            };
+
+            Response.Cookies.Append("darkmode", selection, cookieOptions);
+            return Ok();
+        }
+
+        public IActionResult ShowAboutPage(string FormID)
+        {
+            FormService.GetPageAbout(FormID);
+            return PartialView("_AboutPage");
+        }
+
+        // Keep the static Decrypt method for backward compatibility if needed elsewhere
         public static string Decrypt(string cipherText)
         {
             string EncryptionKey = "MAKV2SPBNI99212";
@@ -134,49 +214,5 @@ namespace TRS.Controllers
             }
             return cipherText;
         }
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-        
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-    
-        [HttpPost]
-        public ActionResult SetTheme(string selection)
-        {
-            CookieOptions option = new CookieOptions();
-            option.Expires = DateTime.Now.AddDays(365);
-
-            Response.Cookies.Append("theme", selection, option);
-
-            var returnUrl = Request.Headers["Referer"].ToString();
-
-            return Json(new { result = "Redirect", url = returnUrl });
-        }
-
-        public IActionResult ShowAboutPage(string FormID)
-        {
-            FormService.GetPageAbout(FormID);
-            return PartialView("_AboutPage");
-        }
-
-        [HttpPost]
-        public void SetDarkMode(string selection)
-        {
-            CookieOptions option = new CookieOptions();
-            option.Expires = DateTime.Now.AddDays(365);
-
-            Response.Cookies.Append("darkmode", selection, option);
-        }
-
     }
 }

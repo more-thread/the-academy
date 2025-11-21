@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
 using System.Diagnostics;
+using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
@@ -11,7 +12,8 @@ using TRS.ViewModels;
 
 namespace TRS.Controllers
 {
-public class TrainingFeedbackController : Controller
+    [ValidateSession]
+    public class TrainingFeedbackController : Controller
     {
         private readonly ILogger<TrainingFeedbackController> _logger;
         private readonly ITrainingRegistrationService _trainingRegistrationService;
@@ -40,8 +42,7 @@ public class TrainingFeedbackController : Controller
             _trainingFeedbackService = trainingFeedbackService;
             _trainingScheduleService = trainingScheduleService;
         }
-        
-        [AccessService(ControllerName = "TrainingFeedback")]
+        [ValidateAccess(ControllerName = "TrainingFeedback")]
         public IActionResult Index()
         {
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
 using System.Diagnostics;
+using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
@@ -10,7 +11,8 @@ using TRS.ViewModels;
 
 namespace TRS.Controllers
 {
-public class TrainingProfileController : Controller
+    [ValidateSession]
+    public class TrainingProfileController : Controller
     {
         private readonly ILogger<TrainingProfileController> _logger;
         private readonly ITrainingRegistrationService _trainingRegistrationService;
@@ -37,7 +39,7 @@ public class TrainingProfileController : Controller
             _trainingScheduleService = trainingScheduleService;
             _trainingCourseService = trainingCourseService;
         }
-        [AccessService(ControllerName = "TrainingProfile")]
+        [ValidateAccess(ControllerName = "TrainingProfile")]
         public async Task<IActionResult> Index()
         {
             try
