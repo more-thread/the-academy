@@ -61,7 +61,11 @@
                                 .HtmlAttributes(new { @class = "k-button-solid-success btn_action_done", 
                                                 title = "Complete training" })
                                 .Click("grid_onClick_done");
-                    }).Width(80).Title("ACTION").Sticky()
+                        command.Custom("Export").Text(" ").IconClass("k-icon k-i-file-excel")
+                                .HtmlAttributes(new { @class = "k-button-outline-warning btn_action_export",
+                                                title = "Export attendees"})
+                                .Click("grid_onClick_export");
+                    }).Width(135).Title("ACTION").Sticky()
                     .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
                 })
                 .ToolBar(toolbar => {toolbar.Excel();}
@@ -344,6 +348,32 @@
         
     }
     
+    async function grid_onClick_export(e){
+        e.preventDefault();
+
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr")); 
+        debugger
+        $.ajax({
+            url: "@Url.Action("ExportExcel", "TrainingMonitoring")",
+            type: "POST",
+            data: { paramTrainingCode : dataItem.TrainingCode },
+            success: function(data){
+                debugger
+                var result = data;
+                if(result.FileGuid !== ""){
+                    window.location = '@Url.Action("Download", "TrainingMonitoring")?fileGuid=' + result.FileGuid + '&fileName=' + result.FileName;
+                }
+                else{
+                    $mong.kendoAlertInfo("There was an error exporting the file.");
+                }
+            },
+            error: function(data){
+                debugger
+                $mong.kendoAlertInfo("There was an error exporting the file.");
+            }
+        });
+    }
+
     function grid_onExcelExport(e) {
         //var sheet = e.workbook.sheets[0];
         
