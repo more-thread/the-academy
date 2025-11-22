@@ -393,7 +393,7 @@ namespace TRS.Controllers
                 var workSheet = package.Workbook.Worksheets.Add("Trainees");
 
                 var headerTitles = new List<string>() { "EMPLOYEE NO.", "EMPLOYEE NAME", "POSITION", "DEPARTMENT", "SUPERIOR", "EMAIL ADDRESS", "CONTACT NO.", 
-                                                        "TRAINING COMPLETION STATUS", "TRAINING REGISTRATION STATUS"};
+                                                        "TRAINING COMPLETION STATUS", "TRAINING REGISTRATION STATUS", "REGISTERED BY", "REGISTERED DATE AND TIME" };
 
                 //file info and column headers 
                 workSheet.Cells[1, 1].Value = "Program & Course: " + _schedule.Program.ProgramTitle + " - " + _schedule.Course.CourseTitle;
@@ -428,6 +428,8 @@ namespace TRS.Controllers
                     workSheet.Cells[nextRow, 7].Value = employeeInfo.PersonalPhoneNo;
                     workSheet.Cells[nextRow, 8].Value = attendee.TrainingCompletionStatus;
                     workSheet.Cells[nextRow, 9].Value = attendee.TrainingRegistrationStatus;
+                    workSheet.Cells[nextRow, 10].Value = attendee.RegistrationCreatedBy;
+                    workSheet.Cells[nextRow, 11].Value = attendee.RegistrationCreatedDate;
 
                     lastRow++;
                 }
