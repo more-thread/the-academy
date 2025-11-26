@@ -32,7 +32,7 @@
         
             <div class="overlay-wrapper">
                 <div class="overlay dark loadingSpinner" style="display: none;"><i class="fas fa-3x fa-sync-alt fa-spin"></i></div>
-                @(Html.Kendo().Grid(Model.TrainingScheduleList)
+            @(Html.Kendo().Grid(Model.TrainingScheduleList)
         .Name("grid_trainingScheduleList")
         .HtmlAttributes(new {data_form = "Schedule" })
         .NoRecords()
@@ -53,10 +53,12 @@
             columns.Bound(m => m.RegistrationStatus).Title("REGISTRATION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(270);      
             columns.Command(command =>
             {
-                command.Custom("Register").Text("REGISTER").IconClass("fa fa-user-plus")
-                        .HtmlAttributes(new { @class = "k-button-outline-info btn_action_register"})
-                        .Click("grid_onClick_register")
-                        ;
+                command.Custom("Register").Text(" ").IconClass("fa fa-user-plus")
+                        .HtmlAttributes(new { @class = "k-button-outline-info btn_action_register", title = "Register"})
+                        .Click("grid_onClick_register");
+                command.Custom("Export").Text(" ").IconClass("k-icon k-i-file-excel")
+                        .HtmlAttributes(new { @class = "k-button-outline-warning btn_action_export", title="Export to Excel"})
+                        .Click("grid_onClick_export");
             }).Width(120).Title("ACTION").Sticky()
             .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
         })
@@ -242,6 +244,33 @@
                 }
             )
     }
+
+    function grid_onClick_export(e){
+        e.preventDefault();
+
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        g_trainingCode = dataItem.TrainingCode;
+
+         $.ajax({
+            url: "@Url.Action("ExportExcel", "TraineeRegistration")",
+            type: "POST",
+            data: { paramTrainingCode : dataItem.TrainingCode },
+            success: function(data){
+                debugger
+                var result = data;
+                if(result.FileGuid !== ""){
+                    window.location = '@Url.Action("Download", "TraineeRegistration")?fileGuid=' + result.FileGuid + '&fileName=' + result.FileName;
+                }
+                else{
+                    $mong.kendoAlertInfo("There was an error exporting the file.");
+                }
+            },
+            error: function(data){
+                debugger
+                $mong.kendoAlertInfo("There was an error exporting the file.");
+            }
+        });
+    }//end of function
     
     function grid_onExcelExport(e) {
         var sheet = e.workbook.sheets[0];
