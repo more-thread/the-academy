@@ -1,0 +1,38 @@
+﻿@model List<TRS.Models.UserLogs>
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+
+<div class="card">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-calendar"></i>
+            User Logs
+        </h3>
+    </div>
+    <div class="card-body">
+        @(Html.Kendo().Grid(Model)
+                .Name("grid_recommendedList")
+                .Height(700)
+                .NoRecords()
+                .Columns(columns =>
+                {
+                    columns.Bound(m => m.DateCreated).Title("Date Created").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })                    
+                    .Width(220).ClientTemplate("#= kendo.toString(new Date(DateCreated), 'yyyy-MM-dd HH:mm:ss.fff') #");
+                    columns.Bound(m => m.Activity).Title("Activity").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                    .Width(180);
+                    columns.Bound(m => m.CreatedBy).Title("User").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                    .Width(180);
+                })
+                .Filterable().Sortable()
+                .Scrollable(s => s.Height("auto"))
+                .DataSource(dataSource => dataSource
+                .Ajax().Batch(true)
+                .ServerOperation(false)
+                .Read(read => read.Action("GetLogs", "ActivityLog"))
+                )
+                .Resizable(resize => resize.Columns(true))
+                )
+    </div>
+</div>

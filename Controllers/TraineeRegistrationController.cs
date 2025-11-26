@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
+using OfficeOpenXml;
 using System.Diagnostics;
+using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
@@ -10,6 +12,7 @@ using TRS.ViewModels;
 
 namespace TRS.Controllers
 {
+    [ValidateSession]
     public class TraineeRegistrationController : Controller
     {
         private readonly ILogger<TraineeRegistrationController> _logger;
@@ -43,8 +46,7 @@ namespace TRS.Controllers
             _jobclassService = jobclassService;   
             _trainingRegistrationService = trainingRegistrationService;
         }
-
-        [AccessService(ControllerName = "TraineeRegistration")]
+        [ValidateAccess(ControllerName = "TraineeRegistration")]
         public IActionResult Index()
         {
             _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}",auditTrail);
@@ -330,13 +332,13 @@ namespace TRS.Controllers
 
                 
                 //New Registration - For Confirmation
-                var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +
-                $"This is to inform you that you have been registered to this training,<br>" +
-                $"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
-                "Training Coordinators will review and confirm your registration.<br><br>" +
-                "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
-                ;
-                var subject = "Training - New Registration For Confirmation";
+                //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
+                //$"This is to inform you that you have been registered to this training,<br>" +
+                //$"<b>{paramTrainingCode} - {_trainingSchedule.Course.CourseTitle}</b>.<br>" +
+                //"Training Coordinators will review and confirm your registration.<br><br>" +
+                //"Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
+                //;
+                //var subject = "Training - New Registration For Confirmation";
                 
                 VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(paramEmployeeNo);
                 var superiorEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SuperiorId.ToString()).EmailAddress;
@@ -353,8 +355,15 @@ namespace TRS.Controllers
 
                 var to_recipient = _empDetails.EmailAddress;
                 var copy_recipient =  string.Join(";", coordinatorEmails) +";"+superiorEmail + ";" + sectionHeadEmail;
+
+                var template = EmailTemplates.Get("RegistrationForConfirmation");
+                var html = EmailTemplates.FillTemplate(template.HtmlBody, new Dictionary<string, string>
+                {
+                    ["TrainingCode"] = paramTrainingCode,
+                    ["CourseTitle"] = _trainingSchedule.Course.CourseTitle
+                });
                 
-                _globalService.SendEmail(htmlString,subject,to_recipient,copy_recipient,null);
+                _globalService.SendEmail(html, template.Subject, to_recipient,copy_recipient,null);
             }
             catch (System.Exception ex)
             {
@@ -364,6 +373,101 @@ namespace TRS.Controllers
 
             // Return success response
             return Ok();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> ExportExcel(string paramTrainingCode)
+        {
+            string handle;
+            handle = Guid.NewGuid().ToString();
+
+            TrainingSchedule _schedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramTrainingCode);
+            List<TrainingRegistration> _trainees = await _trainingRegistrationService.GetTraineeListByCode(paramTrainingCode);
+            var _attendees = _trainees.Where(w => w.Attendance == "PRESENT" || w.Attendance == "PARTIAL").ToList();
+
+            MemoryStream stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var lastRow = 6; //constant initial row after column headers
+
+                var workSheet = package.Workbook.Worksheets.Add("Trainees");
+
+                var headerTitles = new List<string>() { "EMPLOYEE NO.", "EMPLOYEE NAME", "POSITION", "DEPARTMENT", "SUPERIOR", "EMAIL ADDRESS", "CONTACT NO.", 
+                                                        "TRAINING COMPLETION STATUS", "TRAINING REGISTRATION STATUS", "REGISTERED BY", "REGISTERED DATE AND TIME" };
+
+                //file info and column headers 
+                workSheet.Cells[1, 1].Value = "Program & Course: " + _schedule.Program.ProgramTitle + " - " + _schedule.Course.CourseTitle;
+                workSheet.Cells[2, 1].Value = "Training Code: " + _schedule.TrainingCode;
+                workSheet.Cells[3, 1].Value = "Date: " + _schedule.StartDate.ToString("yyyy/MM/dd") + " - " + _schedule.EndDate.ToString("yyyy/MM/dd");
+                workSheet.Cells[4, 1].Value = "Time: " + DateTime.Today.Add(_schedule.StartTime).ToString("hh:mm tt") + " - " + DateTime.Today.Add(_schedule.EndTime).ToString("hh:mm tt");
+
+                workSheet.Cells[1, 1, 4, 1].Style.Font.Bold = true;
+
+                var i = 0;
+                foreach (var header in headerTitles)
+                {
+                    var headerCell = workSheet.Cells[6, i + 1];
+                    headerCell.Value = headerTitles[i];
+
+                    i++;
+                }
+                i = 0;
+
+                //trainees
+                foreach(var attendee in _attendees)
+                {
+                    var nextRow = lastRow + 1;
+                    var employeeInfo = attendee.EmployeeInfo;
+
+                    workSheet.Cells[nextRow, 1].Value = employeeInfo.EmployeeNo;
+                    workSheet.Cells[nextRow, 2].Value = employeeInfo.EmployeeName;
+                    workSheet.Cells[nextRow, 3].Value = employeeInfo.PositionName;
+                    workSheet.Cells[nextRow, 4].Value = employeeInfo.DepartmentName;
+                    workSheet.Cells[nextRow, 5].Value = employeeInfo.SuperiorFullname;
+                    workSheet.Cells[nextRow, 6].Value = employeeInfo.EmailAddress;
+                    workSheet.Cells[nextRow, 7].Value = employeeInfo.PersonalPhoneNo;
+                    workSheet.Cells[nextRow, 8].Value = attendee.TrainingCompletionStatus;
+                    workSheet.Cells[nextRow, 9].Value = attendee.TrainingRegistrationStatus;
+                    workSheet.Cells[nextRow, 10].Value = attendee.RegistrationCreatedBy;
+                    workSheet.Cells[nextRow, 11].Value = attendee.RegistrationCreatedDate;
+
+                    lastRow++;
+                }
+
+                //styling
+                workSheet.Cells[6, 1, 6, headerTitles.Count()].Style.Font.Bold = true;
+
+                workSheet.Cells[6, 1, 6, headerTitles.Count()].AutoFilter = true;
+
+                workSheet.Cells[6, 1, workSheet.Cells.End.Row, workSheet.Cells.End.Column].AutoFitColumns();
+
+                package.SaveAs(stream);
+            };
+
+            stream.Position = 0;
+
+            var filepath = Path.Combine(Path.GetTempPath(), handle + ".xlsx");
+            System.IO.File.WriteAllBytes(filepath, stream.ToArray());
+
+            return new JsonResult(new
+            {
+                FileGuid = handle,
+                FileName = "Trainee Registration - " + paramTrainingCode + " " + DateTime.Now.ToString("yyyyMMdd") + ".xlsx"
+            });
+        }
+
+        public virtual ActionResult Download(string fileGuid, string fileName)
+        {
+            var filePath = Path.Combine(Path.GetTempPath(), fileGuid + ".xlsx");
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            var file = File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return file;
+
         }
 
         public IActionResult Privacy()

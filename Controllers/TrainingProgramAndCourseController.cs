@@ -3,17 +3,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Build.Graph;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
+using NuGet.Protocol;
 using System.Diagnostics;
-using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using TRS.Attributes;
+using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
 using TRS.ViewModels;
-using TRS.Global;
-using NuGet.Protocol;
 
 namespace TRS.Controllers
 {
+    [ValidateSession]
     public class TrainingProgramAndCourseController : Controller
     {
         private readonly ILogger<TrainingProgramAndCourseController> _logger;
@@ -42,7 +44,7 @@ namespace TRS.Controllers
             _jobclassService = jobclassService;   
             _logger = logger;
         }
-        [AccessService(ControllerName = "TrainingProgramAndCourse")]
+        [ValidateAccess(ControllerName = "TrainingProgramAndCourse")]
         public IActionResult Index()
         {            
             _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}",auditTrail);

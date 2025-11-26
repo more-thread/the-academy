@@ -1,18 +1,20 @@
-﻿using Kendo.Mvc.Extensions;
+﻿using Azure.Messaging;
+using Kendo.Mvc.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
 using System.Diagnostics;
-using System.Net.Mail;
 using System.Net;
+using System.Net.Mail;
+using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
 using TRS.ViewModels;
-using Azure.Messaging;
 
 namespace TRS.Controllers
 {
+    [ValidateSession]
     public class TrainingScheduleController : Controller
     {
         private readonly ILogger<TrainingScheduleController> _logger;
@@ -49,8 +51,7 @@ namespace TRS.Controllers
             _trainingProgramService = trainingProgramService;            
             _trainingCourseService = trainingCourseService;          
         }
-        
-        [AccessService(ControllerName = "TrainingSchedule")]
+        [ValidateAccess(ControllerName = "TrainingSchedule")]
         public IActionResult Index()
         {
             _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}",auditTrail);

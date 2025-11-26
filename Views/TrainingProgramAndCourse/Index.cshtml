@@ -317,7 +317,8 @@
             .done(
                 function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
                 _window.content(_partialPage);    
-                _window.center();    
+                _window.center();  
+                window_details_Resize()
                 }
             )
     }
@@ -399,6 +400,7 @@
                 function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
                     _window.content(_partialPage);
                     _window.center();    
+                    window_details_Resize()
                 }
             )
     }

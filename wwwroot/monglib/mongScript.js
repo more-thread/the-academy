@@ -6,7 +6,10 @@ $(document).ready(function(){
   $("<style>").appendTo("head").html(`
     .btnStandard {
        width: 80px;
-       height: 30px;
+       height: 30px;                
+       background-color: #f4a434 !important;
+       border-color: #f4a434 !important;
+       color: white !important;
      }
  
     .is-invalid {
