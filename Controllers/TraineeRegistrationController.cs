@@ -429,7 +429,7 @@ namespace TRS.Controllers
                     workSheet.Cells[nextRow, 8].Value = attendee.TrainingCompletionStatus;
                     workSheet.Cells[nextRow, 9].Value = attendee.TrainingRegistrationStatus;
                     workSheet.Cells[nextRow, 10].Value = attendee.RegistrationCreatedBy;
-                    workSheet.Cells[nextRow, 11].Value = attendee.RegistrationCreatedDate;
+                    workSheet.Cells[nextRow, 11].Value = attendee.RegistrationCreatedDate?.ToString("yyyy/MM/dd hh:mm tt");
 
                     lastRow++;
                 }

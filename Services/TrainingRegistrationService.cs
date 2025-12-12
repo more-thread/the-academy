@@ -87,7 +87,9 @@ namespace TRS.Services
                 PostTestThirdScore = tc.PostTestThirdScore,
                 EvaluationScore = tc.EvaluationScore,
                 PostTestStatus = tc.PostTestStatus,
-                RegistrationCode = tc.RegistrationCode,     
+                RegistrationCode = tc.RegistrationCode,  
+                RegistrationCreatedBy = tc.RegistrationCreatedBy,
+                RegistrationCreatedDate = tc.RegistrationCreatedDate,
                 TrainingFeedbackStatus = tc.TrainingFeedbackStatus,               
                 TrainingSchedule = new TrainingSchedule(){
                     ScheduleStatus = tc.TrainingSchedule.ScheduleStatus,
