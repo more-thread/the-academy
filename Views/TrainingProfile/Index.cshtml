@@ -142,7 +142,7 @@
                                     .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
                                     .Width(170);     
                                     columns.Bound(m => m.TrainingFeedbackStatus).Title("TRAINING FEEDBACK STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
-                                    .ClientTemplate("<a class='TrainingFeedbackStatus_Clickable' href=\\# onclick=OpenFeedbackPage('#= RegistrationCode #','#= TrainingFeedbackStatus #');>#= TrainingFeedbackStatus == null? 'INCOMPLETE':  TrainingFeedbackStatus #</a>")
+                                    .ClientTemplate("#if(Attendance == 'ABSENT'){##}else{##if(TrainingFeedbackStatus == 'COMPLETED'){##=TrainingFeedbackStatus##}else{#<a class='TrainingFeedbackStatus_Clickable' href='\\#' onclick='OpenFeedbackPage(\"#=RegistrationCode#\",\"#=TrainingFeedbackStatus#\");'>#=TrainingFeedbackStatus == null ? 'INCOMPLETE' : TrainingFeedbackStatus#</a>#}##}#")
                                     .Width(280).Sticky();
                                 }).ToolBar(toolbar => {
                                   toolbar.ClientTemplate("<div id='custom-toolbar-placeholder'></div>");
