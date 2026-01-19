@@ -123,11 +123,10 @@ namespace TRS.Controllers
             try
             {
                 List<TrainingRegistration> existingSchedules = await _trainingRegistrationService.GetTrainingListByEmployeeNo(auditTrail["LoggedEmployeeNo"]);
-                //TrainingSchedule training = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramTrainingCode);
-
+                TrainingSchedule training = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramTrainingCode);
                 
-                //if (existingSchedules.Any(w=>w.TrainingSchedule.TrainingCode == paramTrainingCode) || training.RegistrationStatus == "CLOSED")
-                if (existingSchedules.Any(w => w.TrainingSchedule.TrainingCode == paramTrainingCode))
+
+                if (existingSchedules.Any(w=>w.TrainingSchedule.TrainingCode == paramTrainingCode) || training.RegistrationStatus == "CLOSED")
                     return Ok(new {isExist = true }); 
                 else
                     return Ok(new {isExist = false });
