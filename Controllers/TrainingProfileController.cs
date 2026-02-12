@@ -50,6 +50,7 @@ namespace TRS.Controllers
                 var totalDays = 0.0;
 
                 foreach (var trainingRegistration in _list.Where(w => w.TrainingSchedule.ScheduleStatus == "COMPLETED"
+                && w.TrainingCompletionStatus == "COMPLETED"
                 && w.TrainingRegistrationStatus == "REGISTERED"
                 && w.TrainingSchedule.TrainingCode.Substring(13, 4) == _globalService.GetDateTime().Year.ToString()))
                 {
@@ -69,7 +70,9 @@ namespace TRS.Controllers
 
                 totalDays = totalHours / 8;
 
-                var totalCoursesTaken = _list.Where(w => w.TrainingSchedule.ScheduleStatus == "COMPLETED").Count();
+                var totalCoursesTaken = _list.Where(w => w.TrainingSchedule.ScheduleStatus == "COMPLETED"
+                && w.TrainingCompletionStatus == "COMPLETED"
+                && w.TrainingSchedule.TrainingCode.Substring(13, 4) == _globalService.GetDateTime().Year.ToString()).Count();
 
                 _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail);
 

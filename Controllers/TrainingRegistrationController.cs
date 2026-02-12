@@ -127,6 +127,7 @@ namespace TRS.Controllers
                 List<TrainingRegistration> existingSchedules = await _trainingRegistrationService.GetTrainingListByEmployeeNo(auditTrail["LoggedEmployeeNo"]);
                 TrainingSchedule training = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramTrainingCode);
                 
+
                 if (existingSchedules.Any(w=>w.TrainingSchedule.TrainingCode == paramTrainingCode) || training.RegistrationStatus == "CLOSED")
                     return Ok(new {isExist = true }); 
                 else
