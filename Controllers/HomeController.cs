@@ -56,8 +56,7 @@ namespace TRS.Controllers
                     return RedirectToAction("Error");
                 }
 
-
-                //var employeeNo = "1019241";
+                //var employeeNo = "1025474";
 
                 var user = _globalService.GetUserInfo(employeeNo);
                 if (user?.UserID == null)
