@@ -323,7 +323,7 @@ namespace TRS.Controllers
 
             TrainingSchedule _schedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramTrainingCode);
             List<TrainingRegistration> _trainees = await _trainingRegistrationService.GetTraineeListByCode(paramTrainingCode);
-            var _attendees = _trainees.Where(w => w.Attendance == "PRESENT" || w.Attendance == "PARTIAL").ToList();
+            var _attendees = _trainees.Where(w => w.Attendance is "PRESENT" or "PARTIAL" or "ABSENT" ).ToList();
 
             MemoryStream stream = new MemoryStream();
 
