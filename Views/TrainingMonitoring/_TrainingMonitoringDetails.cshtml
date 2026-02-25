@@ -186,7 +186,7 @@
                     valid = false;
                     row.find("td:nth-child(3)").addClass("invalid-cell"); // Highlight AbsenceReason cell
                 }
-                debugger
+
                 if (model.Attendance !== "ABSENT" && (model.PostTestFirstScore || 0 ) > 0 && model.TrainingSchedule.Course.WithPostTest) {
                     const totalScore = model.TrainingSchedule.Course.PostTestTotalScore || 0;
 

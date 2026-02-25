@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+using Telerik.SvgIcons;
 using TRS.Global;
 using TRS.Models;
 
@@ -11,6 +13,7 @@ namespace TRS.Services
         bool IsSessionValid();
         string GetCurrentUserId();
         string GetCurrentEmployeeNo();
+        string GetCurrentTemporaryEmployeeNo();
         UserSessionInfo GetCurrentUserSession();
         Dictionary<string, string> GetAuditTrail();
     }
@@ -91,7 +94,13 @@ namespace TRS.Services
             try
             {
                 var employeeNo = session.GetString("SessionEmployeeNo");
+                if (session == null)
+                {
+                    employeeNo = session.GetString("SessionTemporaryEmployeeNo");
+                }
                 session.Clear();
+
+                session.SetString("SessionTemporaryEmployeeNo", employeeNo ?? "");
                 _logger.LogInformation("User session cleared for: {EmployeeNo}", employeeNo);
             }
             catch (Exception ex)
@@ -116,6 +125,7 @@ namespace TRS.Services
             {
                 if (DateTime.Now.Subtract(lastActivityTime).TotalMinutes > 30)
                 {
+                    ClearUserSessionAsync();
                     return false;
                 }
             }
@@ -130,6 +140,9 @@ namespace TRS.Services
 
         public string GetCurrentEmployeeNo() => 
             _httpContextAccessor.HttpContext?.Session?.GetString("SessionEmployeeNo") ?? "";
+
+        public string GetCurrentTemporaryEmployeeNo() =>
+            _httpContextAccessor.HttpContext?.Session?.GetString("SessionTemporaryEmployeeNo") ?? "";
 
         public UserSessionInfo GetCurrentUserSession()
         {
