@@ -52,12 +52,14 @@ namespace TRS.Global
         {
             try
             {
-                        
                 var toWrapped = to != null ? $"'{to}'" : "NULL";
                 var ccWrapped = cc != null ? $"'{cc}'" : "NULL";
                 var bccWrapped = bcc != null ? $"'{bcc}'" : "NULL";
+                // Escape single quotes in html and subject for SQL
+                var htmlEscaped = html?.Replace("'", "''");
+                var subjectEscaped = subject?.Replace("'", "''");
 
-                var sql = $"EXEC TRS.sp_Global_SendEmail {toWrapped}, {ccWrapped}, {bccWrapped}, '{html}', '{subject}'";
+                var sql = $"EXEC TRS.sp_Global_SendEmail {toWrapped}, {ccWrapped}, {bccWrapped}, '{htmlEscaped}', '{subjectEscaped}'";
                 var forms = _context.Database.ExecuteSqlRaw(sql);
             }
             catch (Exception ex)    
@@ -66,68 +68,6 @@ namespace TRS.Global
                 Console.WriteLine(ex.ToString());
             }
         }
-
-        //public void SMTP_SendEmail(string html, string subject, List<string> to = null, List<string> cc = null, List<string> bcc = null)
-        //{
-        //    using (var message = new MailMessage())
-        //    {
-        //        message.From = new MailAddress("jerameel_rivera@universalleaf.com.ph", "Your Name");
-
-        //        if (to != null)
-        //        {
-        //            foreach (var item in to)
-        //            {
-        //                message.To.Add(new MailAddress(item));
-        //            }
-        //        }
-        //        if (cc != null)
-        //        {
-        //            foreach (var item in cc)
-        //            {
-        //                message.CC.Add(new MailAddress(item));
-        //            }
-        //        }
-        //        if(bcc != null)
-        //        {
-        //            foreach (var item in bcc)
-        //            {
-        //                message.Bcc.Add(new MailAddress(item));
-        //            }
-        //        }
-                
-
-        //        message.Subject = subject;
-        //        message.Body = html;
-        //        message.IsBodyHtml = true; // Change to true if body msg is in HTML
-
-        //        using (var client = new SmtpClient("smtpserver.universalleaf.com"))
-        //        {
-        //            client.UseDefaultCredentials = false;
-        //            client.Port = 25;
-        //            client.Credentials = new NetworkCredential("jerameel_rivera", "H@ngl00se1234", "universalleaf");
-        //            client.EnableSsl = false;
-        //            client.Timeout = 600000;
-
-        //            try
-        //            {
-        //                client.SendMailAsync(message); // Email sent
-                        
-        //            }
-        //            catch (SmtpException smtpEx)
-        //            {
-        //                // Log SMTP-specific exceptions
-        //                // You can use a logging framework like Serilog, NLog, etc.
-        //                Console.WriteLine($"SMTP Error: {smtpEx.Message}");
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                // Log general exceptions
-        //                Console.WriteLine($"Error: {ex.Message}");
-        //            }
-        //        }
-        //    }
-        //}
-
 
         public VwHrEmployeeInfo GetHREmployeeInfoByEmployeeNo(string paramEmployeeNo)
         {             
@@ -140,7 +80,13 @@ namespace TRS.Global
             var result = _context.VwHrEmployeeInfos.ToList();
             return result;
         }
-        
+
+        public List<UserLogs> GetLogs()
+        {
+            var result = _context.tUserLogs.ToList();
+            return result;
+        }
+
         public void Log(string message, Dictionary<string,string> audit, Exception exception = null){            
             
             var errMsg = "";

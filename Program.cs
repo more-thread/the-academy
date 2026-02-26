@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
@@ -11,7 +10,6 @@ using TRS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -23,7 +21,9 @@ builder.Services.AddScoped<ITrainingCourseService, TrainingCourseService>();
 builder.Services.AddScoped<ITrainingCoordinatorService, TrainingCoordinatorService>();
 builder.Services.AddScoped<ITrainingRegistrationService, TrainingRegistrationService>();
 builder.Services.AddScoped<ITrainingFeedbackService, TrainingFeedbackService>();
+builder.Services.AddScoped<IEmployeeAuthenticationService, EmployeeAuthenticationService>();
 builder.Services.AddScoped<GlobalService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 
 builder.Services.AddRazorPages();
 builder.Services.AddKendo();
@@ -31,11 +31,13 @@ builder.Services.AddKendo();
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSession(options =>
-    {
-        options.IdleTimeout = TimeSpan.FromHours(1);
-        options.Cookie.HttpOnly = true;
-        options.Cookie.IsEssential = true;
-    });
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
 
 builder.Services.AddMvc().AddSessionStateTempDataProvider();
 builder.Services.AddDbContext<AppDBContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("devCon")));
@@ -53,7 +55,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
-    
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

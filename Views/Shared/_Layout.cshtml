@@ -77,6 +77,7 @@
                 border-color: #f4a434 !important;
                 color: white !important;
             }
+
         </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed @(darkmode == "yes" ? "dark-mode" : "")">
@@ -116,45 +117,12 @@
                     </a>
                     <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="left: inherit; right: 0px;">
                         <div class="dropdown-item dropdown-header">
-                               <div class="widget-user-image" style="margin-bottom:15px;">
-                                    @if (Context.Session.GetString("SessionDisplayPic") != null)
-                                    {
-                                        var imageSrc = @Context.Session.GetString("SessionDisplayPic");
-                                        <img src="@imageSrc" class="img-circle elevation-2" alt="User Image" style="height:100px; width:100px; object-fit: cover; padding: 2px;border: 3px solid;">
-                                    }
-                                    else
-                                    {
-                                        <img src="~/dist/img/DefaultUser.png"  class="img-circle elevation-2" alt="User Image" style="height:100px;width:100px; object-fit: cover">
-                                    }
-                                </div>
-                                <a class="widget-user-username user-info" style="font-size: 15px; font-weight: bold; color:black">
-                                        @Context.Session.GetString("SessionFullName")
-                                </a><br />
-                                <a class="widget-user-desc d-inline-block user-info" style="color:black">
-                                        @Context.Session.GetString("SessionDesignation")
-                                </a><br />
-                                <a class="widget-user-desc d-inline-block user-info" style="color:black">
-                                        @Context.Session.GetString("SessionSectionName")
-                                </a><br />
-
+                            <user-info></user-info>
                         </div>
                     <div class="dropdown-divider"></div>
                     <a href="#" id="btnAbout" class="dropdown-item" style="text-align:center;">
                         <i class="k-icon k-i-info mr-2"></i> About         
                     </a>
-                    @* <div class="dropdown-divider"></div>
-                    <a href="#" id="btnWebTour" class="dropdown-item" style="text-align:center;">
-                    <i class="k-icon k-i-question-circle mr-2"></i> Web Tour
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" id="btnReleaseNotes" class="dropdown-item" style="text-align:center;">
-                    <i class="fa fa-book-open mr-2" style="background: #fff; color: #000;"></i> Release Notes
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" id="btnWorkInstructions" class="dropdown-item" style="text-align:center;">
-                    <span style="text-decoration: underline; font-weight:bold; font-family:'Times New Roman'">WI</span> &nbsp; Work Instructions
-                    </a> *@
-
                     <br />       
                     </div>         
                      
@@ -174,35 +142,10 @@
 
             <!-- Sidebar -->
             <div class="sidebar">
-                <!-- Sidebar user panel (optional) -->
-                @* <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-                    <div class="image">
-                        @if (Context.Session.GetString("SessionDisplayPic") != null)
-                        {
-                            var imageSrc = @Context.Session.GetString("SessionDisplayPic");
-                            <img src="@imageSrc" class="img-circle elevation-2" alt="User Image">
-                        }
-                        else
-                        {
-                            <img src="~/dist/img/DefaultUser.png" class="img-circle elevation-2" alt="User Image">
-                        }
-
-                    </div>
-                    <div class="info">
-                        <a href="#" class="d-block">Hello! @Context.Session.GetString("SessionFirstName")</a>
-                    </div>
-                </div> *@
-
-
+               
                 <!-- Sidebar Menu -->
                 <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                        @foreach (var item in MenuService.MenuList.Where(x => x.EmployeeID ==
-                        Context.Session.GetString("SessionEmployeeNo")))
-                        {
-                            @Html.Raw(item.Html)
-                        }
-                    </ul>
+                    <navigation-menu></navigation-menu>
                 </nav>
                 <!-- /.sidebar-menu -->
             </div>
@@ -247,32 +190,33 @@
                         .Actions(actions => actions.Close())
                     )
 
-     @(Html.Kendo().Window()
-                .Name("winAboutPage")
-                .Draggable()
-                .Pinned(true)
-                .Modal()
-                .Visible(false)
-        .Width(700)
-        .Height(400)
-                .Actions(actions => actions.Close())
-                .Content(@<text>
-                        <div class="col-md-auto">
-                                <div class="col-sm-auto">
+                     @(Html.Kendo().Window()
+                        .Name("winAboutPage")
+                        .Draggable()
+                        .Pinned(true)
+                        .Modal()
+                        .Visible(false)
+                        .Width(700)
+                        .Height(400)
+                        .Actions(actions => actions.Close())
+                        .Content(@<text>
+                                <div class="col-md-auto">
+                                        <div class="col-sm-auto">
 
-                                    <h5 style="margin-top: 5px">
-                                        <i class="k-icon k-i-info" style="font-size: 30px; margin-top: -6px"></i>
-                                        About this Page
-                                    </h5>
-                                    <div class="k-card" style="margin-top: 10px; min-height: 230px; margin-bottom: 30px">
-                                        <div class="k-card-body" id="divAboutForm">
+                                            <h5 style="margin-top: 5px">
+                                                <i class="k-icon k-i-info" style="font-size: 30px; margin-top: -6px"></i>
+                                                About this Page
+                                            </h5>
+                                            <div class="k-card" style="margin-top: 10px; min-height: 230px; margin-bottom: 30px">
+                                                <div class="k-card-body" id="divAboutForm">
+                                                    <about-page form-id="@ViewBag.FormID"></about-page>
+                                                    </div>
+                                                </div>
 
                                             </div>
                                         </div>
-
-                                    </div>
-                                </div>
-                        </text>))
+                                </text>)
+                        )
    
 
                     @RenderBody()
@@ -347,9 +291,21 @@
 </html>
 
 <script>
+    function window_details_Resize(e) {
+        debugger
+        var wnd = $("#window_details").data("kendoWindow");
+        var $wrapper = wnd.wrapper;
+        var browserHeight = window.innerHeight;
+        var windowHeight = $wrapper.height();
 
-    var getTrainingCourseDescriptionByCodeUrl = '@Url.Action("GetTrainingCourseDescriptionByCode", "TrainingSchedule")',
-    getTrainingProgramJobClassesByCodeUrl = '@Url.Action("GetTrainingProgramJobClassesByCode", "TrainingProgramAndCourse")';
+        // Only set height if window is taller than browser
+        if (windowHeight > browserHeight) {
+            wnd.setOptions({ height: browserHeight });
+        }
+    }
+
+    var getTrainingCourseDescriptionByCodeUrl = '@Url.Action("GetTrainingCourseDescriptionByCode", "TrainingSchedule")';
+    var getTrainingProgramJobClassesByCodeUrl = '@Url.Action("GetTrainingProgramJobClassesByCode", "TrainingProgramAndCourse")';
 
 
     $(document).ready(function () {
@@ -358,11 +314,9 @@
         
          @if (Context.Session.GetString("SessionEmployeeNo") == null)
          {
-             <text>
-                
-                $mong.kendoAlertInfo("Your session has expired. Please relogin."); 
-                
-             </text>         
+             <script>
+                 window.location.href = '@Url.Action("Login", "Home")';
+             </script>         
          }
 
     })
@@ -378,24 +332,8 @@
 
     function ShowAboutForm()
     {
-        $.ajax({
-            url: "@Url.Action("ShowAboutPage","Home")", //get partialview
-            data: { FormID: '@(ViewBag.FormID)' },
-            type: "POST",
-            dataType: "html",
-            async: true,
-            error: function () {
-                
-            }
-        }).done(function (html) {
-            //$('#modalAboutFormPopup').modal('show');
-
-             var winAboutPage = $("#winAboutPage").data('kendoWindow');
-            winAboutPage.center().open();
-
-            $(divAboutForm).html(html) //ipakita jay laman iti partialview
-
-        })
+        var winAboutPage = $("#winAboutPage").data('kendoWindow');
+        winAboutPage.center().open();        
     }
 
     function ShowTimelineForm()
@@ -440,8 +378,6 @@
         $(".nav-link form-menu").removeClass("active")
         for (var i = 0; i < menuList.length; i++) {
             if (menuList[i].dataset.id === '@(ViewBag.FormID)') {
-                //$(".nav-item").removeClass("menu-is-opening")
-                //$(".nav-item").removeClass("menu-open")
                 menuList[i].classList.add("menu-is-opening")
                 menuList[i].classList.add("menu-open")
                 menuList[i].classList.add("active");
@@ -452,8 +388,6 @@
 
         for (var i = 0; i < childMenuList.length; i++) {
             if (childMenuList[i].dataset.id === '@(ViewBag.FormID)') {
-                //$(".nav-item").removeClass("menu-is-opening")
-                //$(".nav-item").removeClass("menu-open")
                 childMenuList[i].parentElement.parentElement.parentElement.classList.add("menu-is-opening")
                 childMenuList[i].parentElement.parentElement.parentElement.classList.add("menu-open")
                 childMenuList[i].parentElement.parentElement.parentElement.firstChild.classList.add("active")
@@ -465,8 +399,6 @@
 
         for (var i = 0; i < innerChildMenuList.length; i++) {
             if (innerChildMenuList[i].dataset.id === '@(ViewBag.FormID)') {
-                //$(".nav-item").removeclass("menu-is-opening")
-                //$(".nav-item").removeclass("menu-open")
                 innerChildMenuList[i].parentElement.parentElement.parentElement.parentElement.parentElement.classList.add("menu-is-opening")
                 innerChildMenuList[i].parentElement.parentElement.parentElement.parentElement.parentElement.classList.add("menu-open")
                 innerChildMenuList[i].parentElement.parentElement.parentElement.parentElement.parentElement.firstChild.classList.add("active")
@@ -525,6 +457,16 @@
 
             }
       });
+    });
+
+    $(function() {
+        $('button.k-toolbar-button').filter(function() {
+            return $(this).text().trim() === 'Apply Filters';
+        }).css({
+            'background-color': '#f4a434',
+            'border-color': '#f4a434',
+            'color': 'white'
+        });
     });
 </script>
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NuGet.Packaging.Licenses;
 using System.Diagnostics;
+using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
@@ -10,6 +11,7 @@ using TRS.ViewModels;
 
 namespace TRS.Controllers
 {
+    [ValidateSession]
     public class TrainingRegistrationApprovalController : Controller
     {
         private readonly ILogger<TrainingRegistrationApprovalController> _logger;
@@ -34,7 +36,7 @@ namespace TRS.Controllers
             _logger = logger;
             _trainingRegistrationService = trainingRegistrationService;
         }
-        [AccessService(ControllerName = "TrainingRegistrationApproval")]
+        [ValidateAccess(ControllerName = "TrainingRegistrationApproval")]
         public IActionResult Index()
         {
             _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail);
@@ -115,12 +117,12 @@ namespace TRS.Controllers
                     _trainingRegistration.RegistrationApprovedDate = _globalService.GetDateTime();
 
                     //New Registration - For Confirmation
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +                    
-                    $"This is to inform you that your registration to this training, <b>{paramRegistrationCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been approved.<br>" +
-                    "Training Coordinators will review and confirm your registration.<br><br>" +
-                    "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
-                    ;
-                    var subject = "Training - New Registration For Confirmation";
+                    //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                    
+                    //$"This is to inform you that your registration to this training, <b>{paramRegistrationCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been approved.<br>" +
+                    //"Training Coordinators will review and confirm your registration.<br><br>" +
+                    //"Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
+                    //;
+                    //var subject = "Training - New Registration For Confirmation";
 
                     var superiorEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SuperiorId.ToString()).EmailAddress;
                     var sectionHeadEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SectionHeadId.ToString()).EmailAddress;
@@ -136,8 +138,15 @@ namespace TRS.Controllers
 
                     var to_recipient = _empDetails.EmailAddress;
                     var copy_recipient =  string.Join(";", coordinatorEmails) +";"+superiorEmail + ";" + sectionHeadEmail;
-                    
-                    _globalService.SendEmail(htmlString,subject,to_recipient,copy_recipient,null);
+
+                    var template = EmailTemplates.Get("RegistrationApproved");
+                    var html = EmailTemplates.FillTemplate(template.HtmlBody, new Dictionary<string, string>
+                    {
+                        ["TrainingCode"] = paramRegistrationCode,
+                        ["CourseTitle"] = _trainingRegistration.TrainingSchedule.Course.CourseTitle
+                    });
+
+                    _globalService.SendEmail(html, template.Subject, to_recipient,copy_recipient,null);
                 }
                 else
                 {
@@ -146,11 +155,11 @@ namespace TRS.Controllers
                     _trainingRegistration.RegistrationDisapprovedDate = _globalService.GetDateTime();
 
                     //New Registration - For Confirmation
-                    var htmlString = "<p>Dear Ma''am/Sir,<br><br>" +                                        
-                    $"This is to inform you that your registration to this training, <b>{paramRegistrationCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been disapproved due to this reason: {paramReason}.<br><br>" +
-                    "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
-                    ;
-                    var subject = "Training - New Registration Disapproved";
+                    //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                                        
+                    //$"This is to inform you that your registration to this training, <b>{paramRegistrationCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been disapproved due to this reason: {paramReason}.<br><br>" +
+                    //"Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the status of your training and registrations.</p>"
+                    //;
+                    //var subject = "Training - New Registration Disapproved";
 
                     var superiorEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SuperiorId.ToString()).EmailAddress;
                     var sectionHeadEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SectionHeadId.ToString()).EmailAddress;
@@ -166,7 +175,15 @@ namespace TRS.Controllers
                     var to_recipient = _empDetails.EmailAddress;
                     var copy_recipient =  string.Join(";", coordinatorEmails) +";"+superiorEmail + ";" + sectionHeadEmail;
                     
-                    _globalService.SendEmail(htmlString,subject,to_recipient,copy_recipient,null);
+                    var template = EmailTemplates.Get("RegistrationDisapproved");
+                    var html = EmailTemplates.FillTemplate(template.HtmlBody, new Dictionary<string, string>
+                    {
+                        ["TrainingCode"] = paramRegistrationCode,
+                        ["CourseTitle"] = _trainingRegistration.TrainingSchedule.Course.CourseTitle,
+                        ["Reason"] = paramReason
+                    });
+
+                    _globalService.SendEmail(html, template.Subject, to_recipient,copy_recipient,null);
                 }
 
 

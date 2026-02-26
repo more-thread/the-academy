@@ -231,6 +231,7 @@
                 function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
                 _window.content(_partialPage); 
                 _window.center()
+                window_details_Resize()
                 }
             )
     }
@@ -291,6 +292,7 @@
             .done(
                 function(_partialPage){ //pages: _TrainingCoordinatorDetails
                     _window.content(_partialPage);
+                    window_details_Resize()
                 }
             )
     }
@@ -317,19 +319,24 @@
          var _window = $("#window_details").data("kendoWindow");
         //add spinner
         kendo.ui.progress(_window.element, true);
-
+        debugger
         if(events.length == 0){
             return;
         }       
         
         $("#window_details").data("kendoWindow").open();
-        $.get('@Url.Action("CheckIfAlreadyRegistered","TrainingRegistration")',{paramTrainingCode:events[0].Schedule.TrainingCode}).done(
+        $.get('@Url.Action("CheckIfAlreadyRegistered","TrainingRegistration")',{paramTrainingCode:events[0].Schedule.TrainingCode})
+        .done(
             function (CheckIfAlreadyRegistered) {            
-                 $.get('@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")',{control: "View", code : events[0].ID}).done(
+                 $.get('@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")',{control: "View", code : events[0].ID})
+                 .done(
                     function(_TrainingScheduleDetails){   
                         $("#window_details").data("kendoWindow").content(_TrainingScheduleDetails);                        
                         $("#window_details").data("kendoWindow").title(events[0].Schedule.TrainingCode);
-                        $("#window_details").data("kendoWindow").center()
+                        $("#window_details").data("kendoWindow").center()                        
+                        
+                        window_details_Resize()
+
                         g_trainingCode = events[0].Schedule.TrainingCode;
                         
                         if(!CheckIfAlreadyRegistered.isExist)  {
@@ -365,7 +372,7 @@
         $.post('@Url.Action("RegisterTraining","TrainingRegistration")', {paramTrainingCode: g_trainingCode})
             .fail(
                 function (res){     
-                     $(".loadingSpinner").hide();  
+                    $(".loadingSpinner").hide();  
                     $mong.kendoAlertInfo(res.responseText);
                     return
                 }   
@@ -414,6 +421,7 @@
                 function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
                 _window.content(_partialPage);       
                 _window.center();
+                window_details_Resize()
                 }
             )
     }
@@ -448,6 +456,7 @@
                 function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
                 _window.content(_partialPage);     
                 _window.center();    
+                window_details_Resize()
                 }
             )
     }
@@ -480,7 +489,8 @@
             .done(
                 function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
                 _window.content(_partialPage);    
-                _window.center();        
+                _window.center();   
+                window_details_Resize()     
                 }
             )
     }
