@@ -1,4 +1,21 @@
 @model TRS.ViewModels.TrainingFeedbackViewModel
+@{
+    var isEnabled = (Model.TrainingRegistrationDetails.TrainingFeedbackStatus == "COMPLETE" || Model.TrainingRegistrationDetails.Attendance == "ABSENT" ? "disabled" : "enabled");
+}
+<style>
+    .answer-radio {
+        width: 20px;
+        height: 20px;
+        transform: scale(1.5);
+        margin: 5px;
+        cursor: pointer;
+    }
+
+    /* Additional styling to ensure proper spacing */
+    .table td {
+        vertical-align: middle;
+    }
+</style>
 <div class="row">        
     <div style="background-color: #262626; color:rgba(255, 255, 255, 0.863); padding: 1.5em;">
     <div style="display: flex;align-items: center; margin-left: -1em;">
@@ -92,6 +109,7 @@
         <p>Please complete this survey below using the following scale to rate your degree of agreement in the identified facets of training.</p>
     </div>    
     <div class="col-lg-12"></div>
+    
     <table class="table table-striped">
         <tbody>
             <tr>
@@ -112,9 +130,7 @@
                         var disagreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "2").FirstOrDefault() ==null? "":"checked");
                         var agreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "3").FirstOrDefault() ==null? "":"checked");
                         var stronglyAgreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "4").FirstOrDefault() ==null? "":"checked");
-                        var naIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "0").FirstOrDefault() ==null? "":"checked");
-                        var isEnabled = (Model.TrainingRegistrationDetails.TrainingFeedbackStatus == "COMPLETE" || Model.TrainingRegistrationDetails.Attendance == "ABSENT" ? "disabled" : "enabled");
-
+                        var naIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "0").FirstOrDefault() ==null? "":"checked");            
                         <tr>
                             <td>@item.QuestionSequence.) @item.Question.ToString()</td>
                             <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="1" @stronglyDisagreeIsChecked /></td>
@@ -140,7 +156,8 @@
     </div>    
     <div class="col-lg-12">
         @foreach(var category in Model.TrainingFeedbackQuestions.Where(w => w.Category == "Comments").OrderBy(s=>s.CategorySequence).GroupBy(s=>s.Category)){   
-            @foreach(var item in Model.TrainingFeedbackQuestions.Where(w => w.Category == category.Key).OrderBy(s=>s.QuestionSequence)){                                    
+            @foreach (var item in Model.TrainingFeedbackQuestions.Where(w => w.Category == category.Key).OrderBy(s => s.QuestionSequence))
+            {
                 <div class="col-lg-12">
                     <div class="form-group">
                         <label>@item.QuestionSequence.) @item.Question.ToString()
@@ -148,7 +165,7 @@
                                 <span style="color:red;">*</span>
                             }
                         </label>
-                        <textarea name="@item.QuestionID.ToString()" data-question-id="@item.QuestionID.ToString()" class="answer-textarea form-control @(item.IsRequired == true ? "required-field" : "")" rows="2" id="@item.Question.ToString()">@Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID).FirstOrDefault()?.Answer</textarea>
+                        <textarea @isEnabled name="@item.QuestionID.ToString()" data-question-id="@item.QuestionID.ToString()" class="answer-textarea form-control @(item.IsRequired == true ? "required-field" : "")" rows="2" id="@item.Question.ToString()" isEnabled>@Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID == item.QuestionID).FirstOrDefault()?.Answer</textarea>
                     </div>
                 </div>
             }
@@ -157,8 +174,8 @@
 </div>
 
 
-<div class="card-footer">                        
-    <button type="submit" id="btnSubmit" class="btn btn-default float-right" onclick="Submit()">Submit</button>
+<div class="card-footer">  
+    <button @isEnabled type="submit" id="btnSubmit" class="btn btn-default float-right" onclick="Submit()">Submit</button>
 </div>
 
 <script>
@@ -192,6 +209,8 @@
         if (result !== true) {                    
             return;//exit
         }    
+        
+        $("#btnSubmit").prop("disabled", "disabled");
 
         var _model = [];
         var employeeNo = $("#employeeInfo")[0].dataset.id;
@@ -230,6 +249,7 @@
                     $.each($('textarea'), function (index, item) {
                         $(item).prop("disabled","disabled")
                     })
+
                     return
                 }
             )

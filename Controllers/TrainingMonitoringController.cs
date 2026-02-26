@@ -192,7 +192,7 @@ namespace TRS.Controllers
                             }
 
                             //Training Feedback Status
-                            if (traineeRegistration.TrainingFeedbackStatus != "COMPLETE" || traineeRegistration.TrainingFeedbackStatus != null)
+                            if (traineeRegistration.TrainingFeedbackStatus != "COMPLETE" || traineeRegistration.TrainingFeedbackStatus == null)
                                 traineeRegistration.TrainingFeedbackStatus = "INCOMPLETE";
 
 
