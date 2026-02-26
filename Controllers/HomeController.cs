@@ -76,6 +76,34 @@ namespace TRS.Controllers
             }
         }
 
+        public async Task<IActionResult> ContinueSession()
+        {
+            var employeeNo = _sessionService.GetCurrentEmployeeNo();
+
+            // If no employee number in session, redirect to login
+            if (string.IsNullOrEmpty(employeeNo))
+            {
+                return RedirectToAction("Timeout");
+            }
+
+            // Get user access permissions
+            var formAccesses = _globalService.GetUserAccess(employeeNo);
+            if (formAccesses.Count == 0)
+            {
+                _logger.LogWarning("No form access found for user: {EmployeeNo}", employeeNo);
+                return RedirectToAction("AccessDenied");
+            }
+
+            // Initialize form and menu services
+            FormService.GetForms(employeeNo, formAccesses);
+            MenuService.GetMenuItem(employeeNo);
+
+            // Log page visit using SessionService audit trail helper
+            var auditTrail = _sessionService.GetAuditTrail();
+            _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail);
+
+            return RedirectToAction("Index");
+        }
         public async Task<IActionResult> Index()
         {
             try

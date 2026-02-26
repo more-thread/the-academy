@@ -199,7 +199,9 @@ namespace TRS.Controllers
                             //Training Completion Status
                             if (
                                 (trainee.Attendance == "PRESENT" || trainee.Attendance == "PARTIAL") &&
-                                (trainee.TrainingSchedule.Course.WithPostTest && trainee.PostTestStatus == "PASSED") &&
+                                ((trainee.TrainingSchedule.Course.WithPostTest && trainee.PostTestStatus == "PASSED")
+                                || !trainee.TrainingSchedule.Course.WithPostTest
+                                ) &&
                                 (traineeRegistration.TrainingFeedbackStatus == "COMPLETE")
                             )
                             {
@@ -271,19 +273,9 @@ namespace TRS.Controllers
                     
                 }
 
-                       
-                //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +                                        
-                //$"Congratulations on finishing the training course on,{_schedule.TrainingCode} - {_schedule.Course.CourseTitle}.<br>" +
-                //"As part of our training analysis, we are conducting a training feedback to determine this training's effectiveness. In this regard, we urge you to complete the form as honestly as possible.<br>" +
-                //"Kindly visit the Training Feedback Form through the Registar System.<br>" +
-                //"Your sincere and constructive feedback will help us assess the relevance of this program and develop future courses customized to our company's needs. <br>" +
-                //"We appreciate your time and effort in providing us with your feedback.</p>"
-                //;
-                //var subject = "Training - Training Feedback";
-
                 var traineeList = await _trainingRegistrationService.GetTraineeListByCode(_schedule.TrainingCode);
 
-                var traineeEmail = traineeList.Select(e => e.EmployeeInfo.EmailAddress);
+                var traineeEmail = traineeList.Where(w => w.Attendance != "ABSENT").Select(e => e.EmployeeInfo.EmailAddress);
                         
                 var _coordinatorList = await _trainingCoordinatorService.GetTrainingCoordinatorList();
                 var coordinatorEmails = _globalService.GetEmployeeList()
