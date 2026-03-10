@@ -5,6 +5,8 @@ namespace TRS.ViewModels{
     {
         public List<TrainingSchedule>? TrainingScheduleList { get; set; }
         public List<TrainingRegistration>? TraineeList { get; set; }
+        public List<TrainingFeedback>? TrainingFeedbackList { get; set; }
+        public List<TrainingFeedbackQuestions>? TrainingFeedbackQuestions { get; set; }
         public TrainingSchedule? TrainingScheduleDetails { get; set; }
         public List<TrainingProgram>? TrainingProgramList { get; set; }
         public TrainingProgram? TrainingProgramDetails { get; set; }

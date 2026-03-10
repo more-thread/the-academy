@@ -21,6 +21,7 @@ namespace TRS.Controllers
         private readonly ITrainingRegistrationService _trainingRegistrationService;
         private readonly ITrainingScheduleService _trainingScheduleService;
         private readonly ITrainingCoordinatorService _trainingCoordinatorService;
+        private readonly ITrainingFeedbackService _trainingFeedbackService;
         private readonly IJobClassService _jobclassService;
         private readonly GlobalService _globalService;
         private readonly Dictionary<string,string> auditTrail;
@@ -29,6 +30,7 @@ namespace TRS.Controllers
         IJobClassService jobclassService,
         ITrainingScheduleService trainingScheduleService,
         ITrainingCoordinatorService trainingCoordinatorService,
+        ITrainingFeedbackService trainingFeedbackService,
         IHttpContextAccessor accessor,    
         GlobalService globalService
         )
@@ -44,6 +46,7 @@ namespace TRS.Controllers
             _trainingScheduleService = trainingScheduleService;
             _trainingCoordinatorService = trainingCoordinatorService;
             _trainingRegistrationService = trainingRegistrationService;
+            _trainingFeedbackService = trainingFeedbackService;
         }
         [ValidateAccess(ControllerName = "TrainingMonitoring")]
         public IActionResult Index()
@@ -128,6 +131,201 @@ namespace TRS.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<ActionResult> ExportFeedbackExcel(string paramTrainingCode)
+        {
+            string handle = Guid.NewGuid().ToString();
+
+            try
+            {
+                // Validate input parameter
+                if (string.IsNullOrEmpty(paramTrainingCode))
+                {
+                    return BadRequest("Training code is required.");
+                }
+
+                // Debug log
+                _globalService.Log($"ExportFeedbackExcel: Starting export for training code: {paramTrainingCode}", auditTrail, null);
+
+                TrainingSchedule _schedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramTrainingCode);
+                if (_schedule == null)
+                {
+                    return BadRequest("Training schedule not found.");
+                }
+
+                List<TrainingRegistration> _trainees = await _trainingRegistrationService.GetTraineeListByCode(paramTrainingCode);
+                List<TrainingFeedbackQuestions> feedbackQuestions = await _trainingFeedbackService.GetTrainingFeedbackQuestionsList();
+                feedbackQuestions = feedbackQuestions?.Where(w => w.Category != "Comments").ToList() ?? new List<TrainingFeedbackQuestions>();
+
+                Dictionary<string, Dictionary<string, string>> feedbackAnswers = await _trainingFeedbackService.GetTrainingFeedbackAnswersByScheduleCode(paramTrainingCode);
+                feedbackAnswers = feedbackAnswers ?? new Dictionary<string, Dictionary<string, string>>();
+
+                // Remove the EmployeeNo filter that was causing the issue
+                var registeredTrainees = _trainees?.Where(w => w.TrainingRegistrationStatus == "REGISTERED" && w.EmployeeInfo != null)
+                    .OrderBy(s => s.EmployeeInfo.EmployeeName).ToList() ?? new List<TrainingRegistration>();
+
+                // Debug logging
+                _globalService.Log($"ExportFeedbackExcel: Found {registeredTrainees.Count} trainees, {feedbackQuestions.Count} questions, {feedbackAnswers.Count} employees with answers", auditTrail, null);
+
+                MemoryStream stream = new MemoryStream();
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    var workSheet = package.Workbook.Worksheets.Add("Training Feedback");
+
+                    // Create headers starting from row 1
+                    var staticHeaders = new List<string> { "EMPLOYEE ID", "EMPLOYEE NAME", "DEPARTMENT", "TRAINING FEEDBACK STATUS" };
+                    var currentCol = 1;
+
+                    // Add static headers
+                    foreach (var header in staticHeaders)
+                    {
+                        workSheet.Cells[1, currentCol].Value = header;
+                        workSheet.Cells[1, currentCol].Style.Font.Bold = true;
+                        workSheet.Cells[1, currentCol].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        currentCol++;
+                    }
+
+                    // Add question headers as "Category.Question"
+                    var questionColumns = new Dictionary<string, int>();
+                    var sortedQuestions = feedbackQuestions
+                        .Where(q => !string.IsNullOrEmpty(q.Category) && !string.IsNullOrEmpty(q.QuestionID))
+                        .OrderBy(q => q.CategorySequence)
+                        .ThenBy(q => q.QuestionSequence)
+                        .ToList();
+
+                    _globalService.Log($"ExportFeedbackExcel: Processing {sortedQuestions.Count} sorted questions", auditTrail, null);
+
+                    foreach (var question in sortedQuestions)
+                    {
+                        var headerText = $"{question.Category.ToUpper()}.{question.Question}";
+
+                        workSheet.Cells[1, currentCol].Value = headerText;
+                        workSheet.Cells[1, currentCol].Style.Font.Bold = true;
+                        workSheet.Cells[1, currentCol].Style.WrapText = true;
+                        workSheet.Cells[1, currentCol].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        workSheet.Column(currentCol).Width = 30;
+                        questionColumns[question.QuestionID] = currentCol;
+                        currentCol++;
+                    }
+
+                    // Add data rows starting from row 2
+                    var rowIndex = 2;
+                    var employeesWithData = 0;
+                    var totalAnswersSet = 0;
+
+                    foreach (var trainee in registeredTrainees)
+                    {
+                        // Add employee info
+                        workSheet.Cells[rowIndex, 1].Value = trainee.EmployeeInfo?.EmployeeNo ?? trainee.EmployeeNo ?? "N/A";
+                        workSheet.Cells[rowIndex, 2].Value = trainee.EmployeeInfo?.EmployeeName ?? "N/A";
+                        workSheet.Cells[rowIndex, 3].Value = trainee.EmployeeInfo?.DepartmentName ?? "N/A";
+                        workSheet.Cells[rowIndex, 4].Value = trainee.TrainingFeedbackStatus ?? "N/A";
+
+                        // Add feedback answers
+                        var employeeNo = trainee.EmployeeNo ?? trainee.EmployeeInfo?.EmployeeNo;
+
+                        if (!string.IsNullOrEmpty(employeeNo) && feedbackAnswers.ContainsKey(employeeNo))
+                        {
+                            employeesWithData++;
+                            var employeeAnswers = feedbackAnswers[employeeNo];
+
+                            if (employeeAnswers != null)
+                            {
+                                foreach (var question in sortedQuestions)
+                                {
+                                    if (!string.IsNullOrEmpty(question.QuestionID) &&
+                                        questionColumns.ContainsKey(question.QuestionID) &&
+                                        employeeAnswers.ContainsKey(question.QuestionID))
+                                    {
+                                        var col = questionColumns[question.QuestionID];
+                                        var answer = employeeAnswers[question.QuestionID] ?? "";
+                                        workSheet.Cells[rowIndex, col].Value = answer;
+                                        totalAnswersSet++;
+                                    }
+                                }
+                            }
+                        }
+
+                        rowIndex++;
+                    }
+
+                    // Debug logging
+                    _globalService.Log($"ExportFeedbackExcel: Processed {rowIndex - 2} employees, {employeesWithData} had feedback data, {totalAnswersSet} answers set", auditTrail, null);
+
+                    // Styling
+                    workSheet.Cells[1, 1, 1, currentCol - 1].Style.Font.Bold = true;
+                    workSheet.Cells[1, 1, 1, currentCol - 1].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    // Auto fit columns for static headers
+                    for (int i = 1; i <= 4; i++)
+                    {
+                        workSheet.Column(i).AutoFit();
+                    }
+
+                    // Set row height for header
+                    workSheet.Row(1).Height = 60;
+
+                    // Add AutoFilter
+                    if (rowIndex > 2)
+                    {
+                        workSheet.Cells[1, 1, rowIndex - 1, Math.Max(currentCol - 1, 4)].AutoFilter = true;
+                    }
+
+                    // Freeze panes
+                    workSheet.View.FreezePanes(2, 5);
+
+                    package.SaveAs(stream);
+                }
+
+                stream.Position = 0;
+                var filePath = Path.Combine(Path.GetTempPath(), handle + ".xlsx");
+                System.IO.File.WriteAllBytes(filePath, stream.ToArray());
+
+                _globalService.Log($"ExportFeedbackExcel: Successfully generated Excel file", auditTrail, null);
+
+                return new JsonResult(new
+                {
+                    FileGuid = handle,
+                    FileName = "Training Feedback Report - " + paramTrainingCode + " " + DateTime.Now.ToString("yyyyMMdd") + ".xlsx"
+                });
+            }
+            catch (Exception ex)
+            {
+                _globalService.Log($"Error in ExportFeedbackExcel: {ex.Message}", auditTrail, ex);
+                return BadRequest($"Export failed: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTrainingFeedbackDetails(string code)
+        {
+            try
+            {
+                TrainingSchedule trainingSchedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(code);
+                List<TrainingRegistration> trainingRegistrations = await _trainingRegistrationService.GetTraineeListByCode(trainingSchedule.TrainingCode);                
+                List<TrainingFeedbackQuestions> feedbackQuestions = await _trainingFeedbackService.GetTrainingFeedbackQuestionsList();
+                feedbackQuestions = feedbackQuestions.Where(static w => w.Category != "Comments").ToList();
+                Dictionary<string, Dictionary<string, string>> feedbackAnswers = await _trainingFeedbackService.GetTrainingFeedbackAnswersByScheduleCode(code);
+
+                TraineeRegistrationViewModel trainingScheduleViewModel = new TraineeRegistrationViewModel()
+                {
+                    TrainingScheduleDetails = trainingSchedule ?? null,
+                    TraineeList = trainingRegistrations, // Use TraineeList instead of TrainingFeedbackList
+                    TrainingFeedbackQuestions = feedbackQuestions
+                };
+
+                ViewBag.FeedbackAnswers = feedbackAnswers; // Pass answers through ViewBag
+
+                return PartialView("~/Views/TrainingMonitoring/_TrainingFeedbackDetails.cshtml", trainingScheduleViewModel);
+            }
+            catch (Exception ex)
+            {
+                _globalService.Log($"Error: {RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail, ex);
+                return BadRequest();
+                throw;
+            }
+        }
 
         public async Task<IActionResult> GetTraineeList([DataSourceRequest] DataSourceRequest request, string code)
         {

@@ -102,6 +102,9 @@
                 <td align="center"><b>Strongly Agree</b></td>
                 <td align="center"><b>NA</b></td>
             </tr>
+            @{
+                var isEnabled = (Model.TrainingRegistrationDetails.TrainingFeedbackStatus == "COMPLETE" || Model.TrainingRegistrationDetails.Attendance == "ABSENT" ? "disabled" : "enabled");
+            }
             @foreach(var category in Model.TrainingFeedbackQuestions.Where(w=>w.Category != "Comments").OrderBy(s=>s.CategorySequence).GroupBy(s=>s.Category)){
                 <tr>
                     <td colspan="6"><b>@category.Key <span style="color:red;">*</span></b></td>
@@ -113,8 +116,7 @@
                         var agreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "3").FirstOrDefault() ==null? "":"checked");
                         var stronglyAgreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "4").FirstOrDefault() ==null? "":"checked");
                         var naIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "0").FirstOrDefault() ==null? "":"checked");
-                        var isEnabled = (Model.TrainingRegistrationDetails.TrainingFeedbackStatus == "COMPLETE" || Model.TrainingRegistrationDetails.Attendance == "ABSENT" ? "disabled" : "enabled");
-
+                        
                         <tr>
                             <td>@item.QuestionSequence.) @item.Question.ToString()</td>
                             <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="1" @stronglyDisagreeIsChecked /></td>
@@ -148,7 +150,7 @@
                                 <span style="color:red;">*</span>
                             }
                         </label>
-                        <textarea name="@item.QuestionID.ToString()" data-question-id="@item.QuestionID.ToString()" class="answer-textarea form-control @(item.IsRequired == true ? "required-field" : "")" rows="2" id="@item.Question.ToString()">@Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID).FirstOrDefault()?.Answer</textarea>
+                        <textarea @isEnabled name="@item.QuestionID.ToString()" data-question-id="@item.QuestionID.ToString()" class="answer-textarea form-control @(item.IsRequired == true ? "required-field" : "")" rows="2" id="@item.Question.ToString()">@Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID == item.QuestionID).FirstOrDefault()?.Answer</textarea>
                     </div>
                 </div>
             }
@@ -158,7 +160,7 @@
 
 
 <div class="card-footer">                        
-    <button type="submit" id="btnSubmit" class="btn btn-default float-right" onclick="Submit()">Submit</button>
+    <button type="submit" id="btnSubmit" class="btn btn-default float-right" onclick="Submit()" @isEnabled>Submit</button>
 </div>
 
 <script>
