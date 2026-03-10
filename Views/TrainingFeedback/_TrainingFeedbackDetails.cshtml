@@ -120,9 +120,6 @@
                 <td align="center"><b>Strongly Agree</b></td>
                 <td align="center"><b>NA</b></td>
             </tr>
-            @{
-                var isEnabled = (Model.TrainingRegistrationDetails.TrainingFeedbackStatus == "COMPLETE" || Model.TrainingRegistrationDetails.Attendance == "ABSENT" ? "disabled" : "enabled");
-            }
             @foreach(var category in Model.TrainingFeedbackQuestions.Where(w=>w.Category != "Comments").OrderBy(s=>s.CategorySequence).GroupBy(s=>s.Category)){
                 <tr>
                     <td colspan="6"><b>@category.Key <span style="color:red;">*</span></b></td>
