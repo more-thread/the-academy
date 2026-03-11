@@ -199,7 +199,7 @@ namespace TRS.Controllers
                             //Training Completion Status
                             if (
                                 (trainee.Attendance == "PRESENT" || trainee.Attendance == "PARTIAL") &&
-                                ((trainee.TrainingSchedule.Course.WithPostTest && trainee.PostTestStatus == "PASSED")
+                                ((trainee.TrainingSchedule.Course.WithPostTest && traineeRegistration.PostTestStatus == "PASSED")
                                 || !trainee.TrainingSchedule.Course.WithPostTest
                                 ) &&
                                 (traineeRegistration.TrainingFeedbackStatus == "COMPLETE")

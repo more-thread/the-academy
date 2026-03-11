@@ -155,6 +155,7 @@ namespace TRS.Controllers
                 {
                     ProgramCode = "",
                     ProgramTitle = "",
+                    Status = true
                 }
             };
             _list.AddRange(await _trainingProgramService.GetTrainingProgramList());
@@ -611,8 +612,6 @@ namespace TRS.Controllers
                 return BadRequest(ex.Message);
             }
 
-            // Return success response
-            return Ok();
         }
 
        
