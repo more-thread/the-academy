@@ -285,14 +285,13 @@
     @*<script src="~/dist/js/demo.js"></script>*@
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     @*<script src="~/dist/js/pages/dashboard.js"></script>*@
-
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
 
 <script>
     function window_details_Resize(e) {
-        debugger
         var wnd = $("#window_details").data("kendoWindow");
         var $wrapper = wnd.wrapper;
         var browserHeight = window.innerHeight;

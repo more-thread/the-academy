@@ -309,7 +309,7 @@ namespace TRS.Controllers
             };
             _list.AddRange(await _trainingProgramService.GetTrainingProgramList());
 
-            return Json(_list);
+            return Json(_list.Where(w => w.Status == true).ToList());
         }
 
         public async Task<JsonResult> GetTrainingCourseEnumList()

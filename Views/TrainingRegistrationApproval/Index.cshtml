@@ -242,12 +242,16 @@
         
         var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
                 
+        $(".loadingSpinner").show();
+
+
         //get Training Code
         var _code = dataItem.RegistrationCode
 
         $.post('@Url.Action("ApproveDisapproveRegistration", "TrainingRegistrationApproval")', { paramRegistrationCode:_code, paramReason: null, paramApproval: "Approve"})
             .fail(
                 function (res) {
+                    $(".loadingSpinner").hide();
                     $mong.kendoAlertInfo(res.responseText);
                     return
                 }
@@ -259,7 +263,8 @@
                     grid.dataSource.read().then(function () {
                         grid.refresh();
                     });
-
+                    
+                    $(".loadingSpinner").hide();
                     $mong.kendoAlertInfo("Successfully approved.");
                     return
                 }
@@ -278,7 +283,7 @@
         g_registrationCode = _code;
         
         var _window = $("#window_trainingCancellation").data("kendoWindow");
-
+        
          $.get('@Url.Action("GetTrainingRegistrationCancellationWindow","TrainingRegistrationApproval")')
          .done(
             function(_TrainingScheduleDetails){

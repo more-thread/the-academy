@@ -56,9 +56,6 @@ namespace TRS.Controllers
                     return RedirectToAction("Error");
                 }
 
-
-                //var employeeNo = "1019241";
-
                 var user = _globalService.GetUserInfo(employeeNo);
                 if (user?.UserID == null)
                 {
@@ -115,6 +112,33 @@ namespace TRS.Controllers
                 _globalService.PageVisitLog($"{RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail);
 
                 return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Index action");
+                return RedirectToAction("Error");
+            }
+        }
+
+        public async Task<IActionResult> ContinueSession()
+        {
+            try
+            {
+
+                var employeeNo = _sessionService.GetCurrentTemporaryEmployeeNo();
+
+                var user = _globalService.GetUserInfo(employeeNo);
+                if (user?.UserID == null)
+                {
+                    _logger.LogWarning("User not found for employee: {EmployeeNo}", employeeNo);
+                    return RedirectToAction("Error");
+                }
+
+                await _sessionService.CreateUserSessionAsync(user);
+
+                _logger.LogInformation("Employee authenticated successfully: {EmployeeNo}", employeeNo);
+
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
