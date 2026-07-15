@@ -1,0 +1,296 @@
+﻿@model TRS.ViewModels.TraineeRegistrationViewModel
+@{
+    ViewData["Title"] = "Training Registration Approval";
+    ViewBag.FormID = "TRAA-0002";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+@(Html.Kendo().Window()
+    .Name("window_trainingCancellation")
+    .Title("TRAINING REGISTRATION DISAPPROVAL")    
+    .Draggable()
+    .Pinned(true)    
+    .Modal()
+    .Visible(false)
+    .Content(@<text>  
+        
+    </text>)    
+    .Width(500)
+    .Actions(actions => actions.Close())
+)
+
+<div class="card card-warning card-outline card-outline-tabs">
+  <div class="card-header p-0 border-bottom-0">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" data-toggle="pill" role="tab" onclick='onClick_filterGrid("FOR APPROVAL")'>For Approval</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="pill" role="tab" onclick='onClick_filterGrid("APPROVED")'>Approved</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="pill" role="tab" onclick='onClick_filterGrid("DISAPPROVED")'>Disapproved</a>
+      </li>
+    </ul>
+  </div>
+  <div class="card-body">
+    <div class="overlay-wrapper">
+            <div class="overlay dark loadingSpinner" style="display: none;"></div>
+            <div class="tab-content">
+      <div class="tab-pane fade show active" role="tabpanel"> 
+        @(Html.Kendo().Grid(Model.TraineeList)
+            .Name("grid_traineeList")
+            .HtmlAttributes(new {data_form = "Schedule"})
+            .Height(546)
+            .NoRecords()            
+            .Columns(columns =>
+            {
+                columns.Bound(m => m.EmployeeInfo.EmployeeNo).Title("EMPLOYEE NO.").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(130);
+                columns.Bound(m => m.EmployeeInfo.EmployeeName).Title("EMPLOYEE NAME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(220);   
+                columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(220);      
+                columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(300);            
+                columns.Bound(m => m.TrainingSchedule.TrainingCode).Title("TRAINING CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(220);                    
+                columns.Bound(m => m.TrainingSchedule.StartDate).Title("DATE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(180)
+                .ClientTemplate("#= kendo.toString(new Date(TrainingSchedule.StartDate), 'MM/dd/yyyy') # - #= kendo.toString(new Date(TrainingSchedule.EndDate), 'MM/dd/yyyy')#");   
+                columns.Bound(m => m.TrainingSchedule.StartTime).Title("TIME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(150)
+                .ClientTemplate("#= TrainingSchedule.StartTime # - #= TrainingSchedule.EndTime #");                      
+                columns.Bound(m => m.TrainingSchedule.Region).Title("REGION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(180);                                
+                columns.Bound(m => m.TrainingSchedule.TrainingType).Title("TRAINING TYPE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                .Width(180);                                       
+                columns.Command(command =>
+                {
+                    
+                    command.Custom("Open").Text(" ").IconClass("k-icon k-i-folder")
+                            .HtmlAttributes(new { @class = "k-button-outline-info btn_action_open"})
+                            .Click("grid_onClick_open")
+                            ;
+                    command.Custom("Approve").Text(" ").IconClass("fa-regular fa-thumbs-up")
+                            .HtmlAttributes(new { @class = "k-button-outline-success btn_action_approve"})
+                            .Click("grid_onClick_approve")
+                            ;
+                    command.Custom("Disapprove").Text(" ").IconClass("fa-regular fa-thumbs-down")
+                            .HtmlAttributes(new { @class = "k-button-outline-primary btn_action_deny"})
+                            .Click("grid_onClick_disapprove")
+                            ;
+                }).Width(140).Title("ACTION").Sticky()
+                .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+            })
+            .ToolBar(toolbar => {
+                toolbar.ClientTemplate("<div id='custom-toolbar-placeholder'></div>");
+            }
+            )
+            .Editable(editable => editable
+            .Mode(GridEditMode.PopUp))
+            .Events(events => events
+                .DataBound("grid_onDataBound")
+            ) // Attach the excelExport event
+            .Scrollable(s => s.Height("auto"))
+            .Pageable()
+            .DataSource(dataSource => dataSource
+                .Ajax()
+                .PageSize(20)
+                .ServerOperation(true)
+                .Read(read => read.Action("GetTraineeList", "TrainingRegistrationApproval").Data("TraineeListApplyFilter"))
+                .Model(model =>
+                {
+                    model.Id(p => p.RegistrationCode);
+                })
+            )
+            .Resizable(resize => resize.Columns(true))
+        )      
+      </div>
+    </div>
+    </div>            
+    
+  </div>
+</div>
+
+<script>
+    var g_trainingCode = "",
+        g_selectedTab = "FOR APPROVAL"; //default
+
+    
+
+    var g_EmployeeNoFilter = "";
+     
+    $(document).ready(function () {
+
+        var customToolbarPlaceholder = $("#custom-toolbar-placeholder");
+
+        var toolbar = $("#grid_traineeList").find(".k-toolbar");
+        var filtersContainer = $("<div style='display:flex;flex:auto;align-items: center;margin-left:10px;margin-right: auto; padding: 10px;'>Filters: </div>").prependTo(toolbar);
+
+        var EmployeeNoFilter = $("<div style='margin-right:10px;margin-left:10px;width:300px;'></div>").appendTo(filtersContainer);
+        var ApplyFiltersButton = $("<button class='k-button k-button-solid-primary k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button'>Apply Filters</button>").appendTo(filtersContainer);
+
+        EmployeeNoFilter.kendoDropDownList({
+            dataTextField: "EmployeeName",
+            dataValueField: "EmployeeNo",  
+            width: 600,
+			optionLabel: 'EMPLOYEE NAME',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetEmployeeList","TrainingRegistrationApproval"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        ApplyFiltersButton.click(function () {
+            // apply the filters to the grid
+            g_EmployeeNoFilter = EmployeeNoFilter.data("kendoDropDownList").value();
+          
+            var grid = $("#grid_traineeList").data("kendoGrid");
+            grid.dataSource.read();
+        });
+
+
+    });
+
+    function TraineeListApplyFilter(){
+        return {
+                paramFilter: g_selectedTab,
+                paramEmployeeNo : g_EmployeeNoFilter
+            }
+    }
+    
+    function onClick_filterGrid(filter){
+        g_selectedTab = filter;
+        $(".loadingSpinner").show();
+        var grid = $("#grid_traineeList").data("kendoGrid");
+        grid.dataSource.read().then(function () {
+            grid.refresh();
+                    $(".loadingSpinner").hide();
+        });
+    }
+    
+    function grid_onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+            
+            if (model.TrainingRegistrationStatus != "FOR APPROVAL") {
+                $(this).find(".btn_action_approve").prop("disabled", true);
+                $(this).find(".btn_action_approve").addClass("k-state-disabled");
+                $(this).find(".btn_action_deny").prop("disabled", true);
+                $(this).find(".btn_action_deny").addClass("k-state-disabled");
+            }
+
+        });
+    }
+    
+    function CloseCancelWindow(){
+        $("#window_trainingCancellation").data("kendoWindow").close();  
+    }
+    function grid_onClick_open(e){
+       
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        //get Training Code
+        var _code = dataItem.TrainingSchedule.TrainingCode
+        //actions: GetTrainingScheduleWindow
+        var _url = '@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")';        
+
+        var _window = $("#window_details").data("kendoWindow");
+                
+        _window.title(_code);
+        _window.open();        
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"View", code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage);    
+                _window.center();
+                window_details_Resize()
+                }
+            )
+    }
+   
+    async function grid_onClick_approve(e){
+
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Do you want to approve the training registration?");
+
+        //If user clicked NO, proceed below
+        if (result !== true) {
+            return;//exit
+        }
+        
+        
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        $(".loadingSpinner").show();
+
+
+        //get Training Code
+        var _code = dataItem.RegistrationCode
+
+        $.post('@Url.Action("ApproveDisapproveRegistration", "TrainingRegistrationApproval")', { paramRegistrationCode:_code, paramReason: null, paramApproval: "Approve"})
+            .fail(
+                function (res) {
+                    $(".loadingSpinner").hide();
+                    $mong.kendoAlertInfo(res.responseText);
+                    return
+                }
+            )
+            .done(
+                function (data) {
+                    var grid = $("#grid_traineeList").data("kendoGrid");
+
+                    grid.dataSource.read().then(function () {
+                        grid.refresh();
+                    });
+                    
+                    $(".loadingSpinner").hide();
+                    $mong.kendoAlertInfo("Successfully approved.");
+                    return
+                }
+            )
+    }
+
+    function grid_onClick_disapprove(e){
+        
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        //get Training Code
+        var _code = dataItem.RegistrationCode
+
+        g_registrationCode = _code;
+        
+        var _window = $("#window_trainingCancellation").data("kendoWindow");
+        
+         $.get('@Url.Action("GetTrainingRegistrationCancellationWindow","TrainingRegistrationApproval")')
+         .done(
+            function(_TrainingScheduleDetails){
+                _window.content(_TrainingScheduleDetails);
+                _window.center().open();
+                window_details_Resize()
+            }
+        )  
+    }
+</script>

@@ -1,0 +1,277 @@
+@model TRS.ViewModels.TraineeRegistrationViewModel
+<div class="row">
+    <div class="col-lg-6">     
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Program & Course:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.Program.ProgramTitle : @Model.TrainingScheduleDetails?.Course.CourseTitle" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row"> 
+            <label class="col-sm-2 col-form-label">Training Code:</label>           
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.TrainingCode" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Date:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.StartDate.ToShortDateString() - @Model.TrainingScheduleDetails?.EndDate.ToShortDateString()" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">            
+            <label class="col-sm-2 col-form-label">Time:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.StartTime - @Model.TrainingScheduleDetails?.EndTime" readonly>                 
+            </div>
+        </div>              
+    </div>
+    <div class="col-lg-6">     
+        <div class="form-group row">            
+            <label class="col-sm-2 col-form-label">Region:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.Region" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Training Type:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.TrainingType" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Facilitator:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.ResourceSpeaker" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">360 Evaluation:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@(Model.TrainingScheduleDetails?.Course.WithEvaluation == true? "YES":"NO")" readonly>                 
+            </div>
+        </div>              
+    </div>
+    <div class="col-md-6 ">      
+    </div>    
+</div>
+ 
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card card-info card-outline">
+            <div class="card-body">
+                 @(Html.Kendo().Grid(Model.TraineeList)
+                    .Name("grid_traineeList")
+                    .HtmlAttributes(new {data_form = "Schedule"})
+                    .Height(446)
+                    .NoRecords()
+                    .Columns(columns =>
+                    {                        
+                        columns.Bound(m => m.EmployeeInfo.EmployeeName).Title("EMPLOYEE NAME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                        .Width(220);
+                        columns.Bound(m => m.Attendance).Title("ATTENDANCE")
+                        .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(170)
+                        .ClientTemplate("#=grid_Placeholder(Attendance)#")
+                        .EditorTemplateName("Attendance").Editable("isTrainingScheduleCompleted");
+                        columns.Bound(m => m.AbsenceReason).Title("REASON FOR ABSENCE/PARTIAL")
+                        .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                        .ClientTemplate("<div class='fake-input'>#= AbsenceReason ? kendo.htmlEncode(AbsenceReason) : '' #</div>")
+                        .Width(220).EditorTemplateName("AbsenceReasonEditor").Editable("isTrainingScheduleCompleted");
+                        columns.Group(g => g
+                        .Title($@"<div style='text-align:center;'>
+                            <div>POST TEST SCORE</div>
+                            <div style='font-size:13px;'>({Model.TrainingScheduleDetails?.Course?.PostTestTotalScore ?? 0}pts)</div>
+                        </div>")
+                        .Columns(score =>
+                        {
+                            score.Bound(c => c.PostTestFirstScore).Title("1").Width(80)
+                            .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                            .HtmlAttributes(new { style = "text-align:center;" })                            
+                            .ClientTemplate("<div class='fake-input'>#= PostTestFirstScore ? kendo.htmlEncode(PostTestFirstScore) : '' #</div>")
+                            .EditorTemplateName("PositiveWholeNumber").Editable("isPostTestScoreEditable");
+                            score.Bound(c => c.PostTestFirstScorePercentage).Title("%").Width(80).HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).HtmlAttributes(new { style = "text-align:center;" })
+                            .ClientTemplate("#= TrainingSchedule.Course.PostTestTotalScore? kendo.format('{0:p0}', (PostTestFirstScore/TrainingSchedule.Course.PostTestTotalScore)) : '' #");
+                            score.Bound(c => c.PostTestSecondScore).Title("2").Width(80)
+                            .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                            .HtmlAttributes(new { style = "text-align:center;" })
+                            .ClientTemplate("<div class='fake-input'>#= PostTestSecondScore ? kendo.htmlEncode(PostTestSecondScore) : '' #</div>")
+                            .EditorTemplateName("PositiveWholeNumber").Editable("isPostTestScoreEditable");
+                            score.Bound(c => c.PostTestSecondScorePercentage).Title("%").Width(80).HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).HtmlAttributes(new { style = "text-align:center;" })
+                            .ClientTemplate("#= TrainingSchedule.Course.PostTestTotalScore? kendo.format('{0:p0}', (PostTestSecondScore/TrainingSchedule.Course.PostTestTotalScore)) : '' #");
+                            score.Bound(c => c.PostTestThirdScore).Title("3").Width(80)
+                            .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                            .HtmlAttributes(new { style = "text-align:center;" })
+                            .ClientTemplate("<div class='fake-input'>#= PostTestThirdScore ? kendo.htmlEncode(PostTestThirdScore) : '' #</div>")
+                            .EditorTemplateName("PositiveWholeNumber").Editable("isPostTestScoreEditable");
+                            score.Bound(c => c.PostTestThirdScorePercentage).Title("%").Width(80).HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).HtmlAttributes(new { style = "text-align:center;" })
+                            .ClientTemplate("#= TrainingSchedule.Course.PostTestTotalScore? kendo.format('{0:p0}', (PostTestThirdScore/TrainingSchedule.Course.PostTestTotalScore)) : '' #");
+                        }).HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                        );
+                        columns.Bound(m => m.PostTestStatus).Title("POST TEST STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                        .Width(170);
+                        columns.Bound(m => m.EvaluationScore).Title("EVALUATION SCORE")
+                        .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                        .EditorTemplateName("PositiveWholeNumber")
+                        .ClientTemplate("<div class='fake-input'>#= EvaluationScore ? kendo.htmlEncode(EvaluationScore) : '' #</div>")
+                        .Width(170);
+                        columns.Bound(m => m.TrainingFeedbackStatus).Title("TRAINING FEEDBACK STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                        .Width(220);
+                    })
+                    .ToolBar(toolbar => {
+                        toolbar.Custom().Text("Save Changes").HtmlAttributes(new { id = "customSaveChanges", @class = "k-button-solid-tertiary" });
+                        toolbar.Custom().Text("Cancel Changes").HtmlAttributes(new { id = "customCancelChanges", @class = "k-button-solid-error" });
+                    })
+                    .Editable(editable => editable
+                    .Mode(GridEditMode.InCell)
+                    )
+                    .Scrollable(s => s.Height("auto"))
+                    .Pageable()
+                    .DataSource(dataSource => dataSource
+                        .Ajax().Batch(true)
+                        .PageSize(20)
+                        .ServerOperation(false)
+                        .Read(read => read.Action("GetTraineeList", "TrainingMonitoring").Data("ApplyFilterTraineeList"))
+                        .Update(update => update.Action("SaveChanges", "TrainingMonitoring"))
+                        .Model(model =>
+                        {
+                            model.Id(p => p.RegistrationCode);
+                            model.Field(p => p.EmployeeInfo.EmployeeName).Editable(false);
+                            model.Field(p => p.PostTestFirstScorePercentage).Editable(false);
+                            model.Field(p => p.PostTestSecondScorePercentage).Editable(false);
+                            model.Field(p => p.PostTestThirdScorePercentage).Editable(false);
+                            model.Field(p => p.PostTestStatus).Editable(false);
+                            model.Field(p => p.TrainingFeedbackStatus).Editable(false);
+                        })
+                    )
+                    .Resizable(resize => resize.Columns(true))
+                    .Events(events => events.Edit("onEdit"))
+                    )                           
+            </div>
+        </div>
+    </div>        
+</div>
+
+<div class="card-footer">                        
+    <button type="submit" class="btn btn-default float-right" onclick="CloseWindow()">Close</button>
+</div>
+
+
+<script>
+
+    $(document).ready(function() {
+        $("#customSaveChanges").click(async function() {
+            var grid = $("#grid_traineeList").data("kendoGrid");
+            var valid = true;
+            var isForEdit = false;
+            var aboveTotal = false;
+
+            grid.dataSource.data().forEach(function(model) {
+                
+                if (model.dirty) 
+                    isForEdit = true
+                else
+                    return;
+                
+
+                var row = grid.table.find("tr[data-uid='" + model.uid + "']");
+
+                row.find(".invalid-cell").removeClass("invalid-cell"); // Clear previous validation
+
+                if (!model.Attendance) {
+                    valid = false;
+                    row.find("td:nth-child(2)").addClass("invalid-cell"); // Highlight Attendance cell
+                }
+
+                if ((model.Attendance === "PARTIAL" || model.Attendance === "ABSENT") && !model.AbsenceReason) {
+                    valid = false;
+                    row.find("td:nth-child(3)").addClass("invalid-cell"); // Highlight AbsenceReason cell
+                }
+
+                if (model.Attendance !== "ABSENT" && (model.PostTestFirstScore || 0 ) > 0 && model.TrainingSchedule.Course.WithPostTest) {
+                    const totalScore = model.TrainingSchedule.Course.PostTestTotalScore || 0;
+
+                    const firstScore = model.PostTestFirstScore || 0;
+                    const secondScore = model.PostTestSecondScore || 0;
+                    const thirdScore = model.PostTestThirdScore || 0;
+
+                    // Validate that each score is less than or equal to totalScore
+                    if (firstScore > totalScore) {
+                        aboveTotal = true;
+                        row.find("td:nth-child(4)").addClass("invalid-cell");
+                        return;
+                    }
+                    if (secondScore > totalScore) {
+                        aboveTotal = true;
+                        row.find("td:nth-child(6)").addClass("invalid-cell");
+                        return;
+                    }
+                    if (thirdScore > totalScore) {
+                        aboveTotal = true;
+                        row.find("td:nth-child(8)").addClass("invalid-cell");
+                        return;
+                    }
+
+                    const passedFirst = firstScore >= totalScore;
+                    const passedSecond = secondScore >= totalScore;
+
+                    // Validate first test
+                    if (!model.PostTestFirstScore) {
+                        valid = false;
+                        row.find("td:nth-child(4)").addClass("invalid-cell");
+                        return;
+                    }
+
+                    // If first test is failed, second becomes required
+                    if (!passedFirst && !model.PostTestSecondScore) {
+                        valid = false;
+                        row.find("td:nth-child(6)").addClass("invalid-cell");
+                        return;
+                    }
+
+                    // If first and second are failed, third becomes required
+                    if (!passedFirst && !passedSecond && !model.PostTestThirdScore) {
+                        valid = false;
+                        row.find("td:nth-child(8)").addClass("invalid-cell");
+                        return;
+                    }
+
+                }
+            });
+
+            if(!isForEdit){
+                $mong.kendoAlertInfo("No changes made.");  
+                return;//exit
+            }
+             
+            if (aboveTotal) {
+                $mong.kendoAlertInfo("A score cannot exceed the total possible score.");
+            }
+            else if (!valid) {
+                $mong.kendoAlertInfo("Please fill up all required fields.");  
+            } else {
+                //ask user
+                const result = await $mong.kendoConfirmationDialog("Do you want to save the entries?");
+                
+                //If user clicked NO, proceed below
+                if (result !== true) {                    
+                    return;//exit
+                }    
+
+                grid.dataSource.bind("sync", function () {
+                    grid.dataSource.read();
+                    grid.refresh();
+                    $mong.kendoAlertInfo("Successfully saved.");
+                });
+
+                grid.saveChanges();
+            }
+        });
+
+        $("#customCancelChanges").click(function() {
+            var grid = $("#grid_traineeList").data("kendoGrid");
+            grid.cancelChanges();
+            grid.table.find(".invalid-cell").removeClass("invalid-cell"); // Clear validation highlights
+        });
+    });
+    
+</script>

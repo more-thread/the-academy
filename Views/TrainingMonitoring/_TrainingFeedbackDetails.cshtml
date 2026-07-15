@@ -1,0 +1,297 @@
+@model TRS.ViewModels.TraineeRegistrationViewModel
+
+@{
+    var feedbackAnswersJson = ViewBag.FeedbackAnswers != null ? Html.Raw(Json.Serialize(ViewBag.FeedbackAnswers)) : "{}";
+}
+
+<div class="row">
+    <div class="col-lg-6">     
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Program & Course:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.Program.ProgramTitle : @Model.TrainingScheduleDetails?.Course.CourseTitle" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row"> 
+            <label class="col-sm-2 col-form-label">Training Code:</label>           
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.TrainingCode" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Date:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.StartDate.ToShortDateString() - @Model.TrainingScheduleDetails?.EndDate.ToShortDateString()" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">            
+            <label class="col-sm-2 col-form-label">Time:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.StartTime - @Model.TrainingScheduleDetails?.EndTime" readonly>                 
+            </div>
+        </div>              
+    </div>
+    <div class="col-lg-6">     
+        <div class="form-group row">            
+            <label class="col-sm-2 col-form-label">Region:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.Region" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Training Type:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.TrainingType" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Facilitator:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@Model.TrainingScheduleDetails?.ResourceSpeaker" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">360 Evaluation:</label>
+            <div class="col-lg-8">             
+                <input class="form-control" type="text" value="@(Model.TrainingScheduleDetails?.Course.WithEvaluation == true? "YES":"NO")" readonly>                 
+            </div>
+        </div>              
+    </div>
+    <div class="col-md-6 ">      
+    </div>    
+</div>
+ 
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card card-info card-outline">
+            <div class="card-body">
+
+                <button type="button" class="btn btn-default btn-sm" style="margin-bottom:10px;
+    background-color: #f4a434 !important;
+    border-color: #f4a434 !important;
+    color: white !important;
+" onclick="ExportFeedbackToExcel('@Model.TrainingScheduleDetails?.TrainingCode')">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+                <div id="feedback-data" data-feedback-answers='@feedbackAnswersJson' style="display:none;"></div>
+                @(Html.Kendo().Grid(Model.TraineeList)
+                    .Name("grid_traineeFeedbackList")
+                    .HtmlAttributes(new { data_form = "Schedule" })
+                    .Height(446)
+                    .NoRecords()
+                    .Columns(columns =>
+                    {
+                                    columns.Bound(m => m.EmployeeInfo.EmployeeNo).Title("EMPLOYEE ID").HeaderHtmlAttributes(new { @class = "nonCategoryColumns", style = "text-align:center; font-weight:bold;" })
+                        .Width(120);
+                                    columns.Bound(m => m.EmployeeInfo.EmployeeName).Title("EMPLOYEE NAME").HeaderHtmlAttributes(new { @class = "nonCategoryColumns", style = "text-align:center; font-weight:bold;" })
+                        .Width(220);
+                                    columns.Bound(m => m.EmployeeInfo.DepartmentName).Title("DEPARTMENT").HeaderHtmlAttributes(new { @class = "nonCategoryColumns", style = "text-align:center; font-weight:bold;" })
+                        .Width(200);
+                                    columns.Bound(m => m.TrainingFeedbackStatus).Title("TRAINING FEEDBACK STATUS").HeaderHtmlAttributes(new { @class = "nonCategoryColumns", style = "text-align:center; font-weight:bold;" })
+                        .Width(230);
+
+                        // Dynamic columns for training feedback questions grouped by category
+                        if (Model.TrainingFeedbackQuestions != null)
+                        {
+                            var questions = Model.TrainingFeedbackQuestions.Where(q => q.Status == true).OrderBy(q => q.CategorySequence).ThenBy(q => q.QuestionSequence).ToList();
+                            var categorizedQuestions = questions.GroupBy(q => q.Category).OrderBy(g => g.First().CategorySequence);
+
+                            foreach (var categoryGroup in categorizedQuestions)
+                            {
+                                var categoryName = categoryGroup.Key;
+                                var questionsInCategory = categoryGroup.ToList();
+                                
+                                // Create column group for each category
+                                columns.Group(group => group
+                                    .Title(categoryName.ToUpper())
+                                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold; background-color: #f8f9fa; border: 1px solid #dee2e6;" })
+                                    .Columns(categoryColumns =>
+                                    {
+                                        foreach (var question in questionsInCategory)
+                                        {
+                                            var questionId = question.QuestionID;
+                                            categoryColumns.Bound(m => m).Title($"{question.Question}")
+                                            .HeaderHtmlAttributes(new { @class= "categoryColumns", style = "text-align:left; font-weight:bold;", title = question.Question })
+                                            .Width(150)
+                                        .ClientTemplate("#= window.getAnswerForQuestion ? window.getAnswerForQuestion(data.EmployeeInfo.EmployeeNo, '" + questionId + "') : '' #");
+                                        }
+                                    })
+                                );
+                            }
+                        }
+                    })
+                    .Scrollable(s => s.Height("auto"))
+                    .Pageable()
+                    .DataSource(dataSource => dataSource
+                    .Ajax().Batch(true)
+                    .PageSize(20)
+                    .ServerOperation(false)
+                    )
+                    .Resizable(resize => resize.Columns(true))
+                    )
+            </div>
+        </div>
+    </div>        
+</div>
+
+<div class="card-footer">                        
+    <button type="submit" class="btn btn-default float-right" onclick="CloseWindow()">Close</button>
+</div>
+
+
+<style>
+    .nonCategoryColumns {
+        vertical-align: middle !important;        
+    }
+    .categoryColumns {
+        vertical-align: top !important;
+        text-wrap: wrap !important
+    }
+</style>
+
+
+<script>
+     $(document).ready(function() {
+        // Function to map numeric answers to text
+        function mapAnswerToText(answer) {
+            switch(answer) {
+                case "1":
+                    return "Strongly Disagree";
+                case "2":
+                    return "Disagree";
+                case "3":
+                    return "Agree";
+                case "4":
+                    return "Strongly Agree";
+                case "0":
+                    return "NA";
+                default:
+                    return answer; // Return as-is for text answers (comments)
+            }
+        }
+
+        // Define the function in global scope
+        window.getAnswerForQuestion = function(dataItem, questionId) {
+            try {
+                console.log('getAnswerForQuestion called with:', dataItem, questionId);
+
+
+                var feedbackDataElement = document.getElementById('feedback-data');
+                if (!feedbackDataElement) {
+                    console.warn('Feedback data element not found');
+                    return "";
+                }
+
+                var feedbackAnswersJson = feedbackDataElement.getAttribute('data-feedback-answers');
+                if (!feedbackAnswersJson || feedbackAnswersJson === '{}') {
+                    console.warn('No feedback answers data found:', feedbackAnswersJson);
+                    return "";
+                }
+
+                var feedbackAnswers = JSON.parse(feedbackAnswersJson);
+                console.log('Parsed feedback answers:', feedbackAnswers);
+
+                // Get the employee number from the data item
+                var employeeNo = dataItem;
+                console.log('Employee No:', employeeNo, 'Question ID:', questionId);
+
+                if (feedbackAnswers && feedbackAnswers[employeeNo] && feedbackAnswers[employeeNo][questionId]) {
+                    console.log('Found answer:', feedbackAnswers[employeeNo][questionId]);
+                    var rawAnswer = feedbackAnswers[employeeNo][questionId];
+                    // Map numeric answers to text, keep text answers as-is
+                    return mapAnswerToText(rawAnswer);
+                }
+
+                console.log('No answer found for:', employeeNo, questionId);
+                return "";
+            } catch (error) {
+                console.error('Error in getAnswerForQuestion:', error);
+                return "Error: " + error.message;
+            }
+        };
+
+        // Debug: Log ViewBag data
+        console.log('ViewBag.FeedbackAnswers:', @Html.Raw(Json.Serialize(ViewBag.FeedbackAnswers ?? new { })));
+
+        // Refresh the grid after the function is defined
+        setTimeout(function() {
+            var grid = $("#grid_traineeFeedbackList").data("kendoGrid");
+            if (grid) {
+                console.log('Refreshing grid...');
+                grid.refresh();
+            } else {
+                console.warn('Grid not found for refresh');
+            }
+        }, 500);
+    });
+
+    // Custom Excel export function
+    function ExportFeedbackToExcel(trainingCode) {
+        if (!trainingCode) {
+            alert('Training code is required for export.');
+            return;
+        }
+
+        // Show loading indicator
+        var loadingHtml = '<i class="fas fa-spinner fa-spin"></i> Generating Excel...';
+        var originalButton = event.target.innerHTML;
+        var _target = event.target;
+        _target.innerHTML = loadingHtml;
+        _target.disabled = true;
+
+        $.post('@Url.Action("ExportFeedbackExcel", "TrainingMonitoring")', { paramTrainingCode: trainingCode })
+            .done(function(data) {
+                // Trigger download
+                var downloadUrl = '@Url.Action("Download", "TrainingMonitoring")' +
+                    '?fileGuid=' + data.FileGuid + '&fileName=' + encodeURIComponent(data.FileName);
+
+                // Create temporary link and click it
+                var link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = data.FileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Show success message
+                if (typeof $mong !== 'undefined' && $mong.kendoAlertInfo) {
+                    $mong.kendoAlertInfo('Excel file exported successfully!');
+                } else {
+                    alert('Excel file exported successfully!');
+                }
+
+                _target.innerHTML = originalButton;
+                _target.disabled = false;
+            })
+            .fail(function(xhr) {
+                console.error('Export failed:', xhr.responseText);
+                if (typeof $mong !== 'undefined' && $mong.kendoAlertInfo) {
+                    $mong.kendoAlertInfo('Failed to export Excel file: ' + xhr.responseText);
+                } else {
+                    alert('Failed to export Excel file: ' + xhr.responseText);
+                }
+
+                event.target.innerHTML = originalButton;
+                event.target.disabled = false;
+            })
+            .always(function() {
+                // Restore button
+                _target.innerHTML = originalButton;
+                _target.disabled = false;
+            });
+
+    }
+
+    // Handle Kendo Grid Excel export event
+    function grid_onExcelExport(e) {
+        var sheet = e.workbook.sheets[0];
+
+        // Add custom header rows to the exported Excel file
+        sheet.rows.unshift(
+            { cells: [{ value: "Training Feedback Report", textAlign: "center", bold: true }] },
+            { cells: [{ value: "Generated on: " + new Date().toLocaleDateString(), textAlign: "left" }] },
+            {}, // Add an empty row to create separation
+            {} // Add another empty row
+        );
+    }
+</script>

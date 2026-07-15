@@ -1,0 +1,498 @@
+﻿@model TRS.ViewModels.TrainingRegistrationViewModel
+@{
+    ViewData["Title"] = "Training Registration";
+    ViewBag.FormID = "TRTT-0002";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+
+<div class="card card-secondary">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-calendar"></i>
+            Registered Trainings
+        </h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="overlay-wrapper">
+            <div class="overlay dark loadingSpinner" style="display: none;"><i class="fas fa-3x fa-sync-alt fa-spin"></i></div>
+            @(Html.Kendo().Grid(Model.TrainingRegistrationList)
+                .Selectable()
+                .Name("grid_trainingRegistrationList")
+                .HtmlAttributes(new {data_form = "Schedule" })
+                .NoRecords()
+                .Height(500)
+                .Columns(columns =>
+                {
+                    columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })           
+                    .Width(180);
+                    columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(280);             
+                    columns.Bound(m => m.TrainingSchedule.Course.CourseDescription).Title("COURSE DESCRIPTION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(280);             
+                    columns.Bound(m => m.TrainingSchedule.TrainingCode).Title("TRAINING CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(280);                        
+                    columns.Bound(m => m.TrainingSchedule.RegistrationStatus).Title("REGISTRATION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.Region).Title("REGION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.TrainingType).Title("TRAINING TYPE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.FormattedDate).Title("DATE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(180);            
+                    columns.Bound(m => m.TrainingSchedule.FormattedTime).Title("TIME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(150);                         
+                    columns.Bound(m => m.TrainingSchedule.ResourceSpeaker).Title("RESOURCE SPEAKER").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.ClassSize).Title("CLASS SIZE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.MinimumParticipants).Title("MINIMUM PARTICIPANTS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.CostPerHead).Title("COST PER HEAD").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);             
+                    columns.Bound(m => m.TrainingSchedule.Venue).Title("VENUE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(200);            
+                    columns.Bound(m => m.TrainingRegistrationStatus).Title("TRAINING REGISTRATION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+                    .Width(280);            
+                    columns.Command(command =>
+                    {
+                        command.Custom("Open").Text(" ").IconClass("k-icon k-i-folder-open")
+                                .HtmlAttributes(new { @class = "k-button-outline-info btn_action_open",
+                                title = "View"})
+                                .Click("grid_onClick_open")
+                                ;
+                        command.Custom("Cancel").Text(" ").IconClass("k-icon k-i-x")
+                                .HtmlAttributes(new { @class = "k-button-outline-error btn_action_cancel",
+                                title = "Cancel"
+                                })
+                                .Click("grid_onClick_cancel")
+                                ;
+                        command.Custom("Confirm").Text(" ").IconClass("k-icon k-i-check")
+                                .HtmlAttributes(new { @class = "k-button-outline-success btn_action_confirm",
+                                title = "Confirm"
+                                })
+                                .Click("grid_onClick_confirm")
+                                ;
+                    }).Width(150).Title("ACTION").Sticky()
+                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                })
+                .ToolBar(toolbar => {toolbar.Excel();toolbar.Search();}
+                )
+                .Editable(editable => editable
+                .Mode(GridEditMode.PopUp)) 
+                .Excel(excel => excel
+                    .FileName("TrainingRegistrationList.xlsx") // Specify the filename for the exported Excel file
+                    .AllPages(true) // Enable export of all pages, including content before the grid
+                    .Filterable(false)
+                )
+                .Events(events => events
+                    .ExcelExport("grid_onExcelExport")
+                    .DataBound("grid_onDataBound")                   
+                    .Change("grid_onChange")        
+                ) // Attach the excelExport event
+                .Scrollable(s => s.Height("auto"))
+                .Pageable()
+                .DataSource(dataSource => dataSource
+                    .Ajax()
+                    .PageSize(20)
+                    .ServerOperation(true)
+                    .Read(read => read.Action("GetTrainingRegistrationList", "TrainingRegistration"))
+                    .Model(model =>
+                    {
+                        model.Id(p => p.RegistrationCode);
+                    })
+                )
+                .Resizable(resize => resize.Columns(true))
+                )    
+        </div>
+            
+    </div>
+</div>
+
+
+<div class="card card-secondary">
+    <div class="card-header" style="display: flex; justify-content: center;">
+        <h3 class="card-title">            
+            Training Calendar
+        </h3>
+    </div>
+    <div class="card-body">
+            <div class="overlay-wrapper">
+                <div class="overlay dark loadingSpinner" style="display: none;"><i class="fas fa-3x fa-sync-alt fa-spin"></i></div>
+                    @(Html.Kendo().Scheduler<CalendarActivity>()
+                        .Name("scheduler_trainingSchedule")
+                        .Date(DateTime.Now)
+                        .Editable(false)
+                        .ShowWorkHours(true)
+                        .WorkDayStart(8, 0, 0)                        
+                        .WorkDayEnd(17, 0, 0)
+                        .Selectable(true)                                    
+                        .Events(e => e.Change("scheduler_change"))            
+                        .Resources(resource =>
+                        {
+                            resource.Add(m => m.TrainingScheduleStatus)
+                            .Title("Status")
+                            .DataTextField("Text")
+                            .DataValueField("Value")
+                            .DataColorField("Color")
+                            .BindTo(new[] {
+                                new { Text = "AVAILABLE", Value = "AVAILABLE", Color = "#28a745" },
+                                new { Text = "COMPLETED", Value = "COMPLETED", Color = "#6c757d" }
+                            });
+                        })
+                        .Views(views =>
+                        {
+                            views.DayView(wView =>
+                            {
+                                wView.WorkDayStart( 8, 0, 0);
+                                wView.WorkDayEnd(17, 0, 0);
+                                wView.ShowWorkHours(true);
+                                wView.Footer(true);
+                            });
+                            views.WeekView(wView =>
+                            {
+                                wView.WorkDayStart(8, 0, 0);
+                                wView.WorkDayEnd(17, 0, 0);
+                                wView.ShowWorkHours(true);
+                                wView.Footer(true);
+                            });
+                            views.MonthView(mView => mView.Selected(true));
+                        })
+                        .DataSource(d => d
+                            .Read("GetTrainingScheduleActivity", "TrainingRegistration")
+                        )
+                    )
+            </div>        
+    </div>
+</div>
+
+@(Html.Kendo().Window()
+    .Name("window_trainingCancellation")
+    .Title("TRAINING REGISTRATION CONFIRMATION")    
+    .Draggable()
+    .Pinned(true)    
+    .Modal()
+    .Visible(false)
+    .Content(@<text>  
+        
+    </text>)    
+    .Width(500)
+    .Actions(actions => actions.Close())
+)
+<script>    
+    var g_paramEmployeeNo = "",
+        g_registrationCode = "",
+        g_trainingCode = "";
+
+
+    // In your grid_onChange function
+    function grid_onChange(e) {
+        
+        var eventTarget = (event.target) ? $(event.target) : $(event.srcElement);
+        var isAction = eventTarget.hasClass('k-command-cell');
+        if (isAction)
+            return;
+
+        e.preventDefault();
+
+        // Get the selected row
+        var row = this.select();
+
+        // Get the data item of the selected row        
+        var dataItem = this.dataItem(row);  
+                
+        //get Training Code
+        var _code = dataItem.TrainingSchedule.TrainingCode
+
+        //actions: GetTrainingScheduleWindow
+        var _url = '@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")';        
+
+        var _window = $("#window_details").data("kendoWindow");
+                   
+        _window.title(_code);
+        _window.open();         
+        //add spinner
+        kendo.ui.progress(_window.element, true);    
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"View", code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo("Something went wrong. If this is not your first time seeing this, please report this to an IT Administrator");  
+                    _window.content(res.responseText); 
+                    _window.center()
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage); 
+                _window.center()
+                window_details_Resize()
+                }
+            )
+    }
+    
+    function grid_onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+            
+            $(this).find(".btn_action_cancel").prop("disabled", true);
+            $(this).find(".btn_action_cancel").addClass("k-state-disabled");
+
+            $(this).find(".btn_action_confirm").prop("disabled", true);
+            $(this).find(".btn_action_confirm").addClass("k-state-disabled");
+            
+            //the button is enabled if the Training Registration Status of the registered training 
+            //is 'Registered' or 'For Confirmation' or 'Schedule For Confirmation' or 'For Appoval' 
+            //and the Trainig Schedule Status of the particular Training is 'AVAILABLE',
+            //otherwise, disable the Cancel Registration button.
+            
+            if((
+                model.TrainingRegistrationStatus == "REGISTERED" 
+                || model.TrainingRegistrationStatus == "FOR CONFIRMATION" 
+                || model.TrainingRegistrationStatus == "SCHEDULE FOR CONFIRMATION"
+                || model.TrainingRegistrationStatus == "FOR APPROVAL"
+            ) &&
+                model.TrainingSchedule.ScheduleStatus == "AVAILABLE"
+            ){
+                $(this).find(".btn_action_cancel").prop("disabled", false);
+                $(this).find(".btn_action_cancel").removeClass("k-state-disabled");
+            }
+
+            if(model.TrainingRegistrationStatus == "SCHEDULE FOR CONFIRMATION"){                    
+                $(this).find(".btn_action_confirm").prop("disabled", false);
+                $(this).find(".btn_action_confirm").removeClass("k-state-disabled");
+            }
+
+        });
+    }
+    
+    function openNewEntryWindow() {          
+        var _url = _url = '@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")'; 
+        
+        var _window = $("#window_details").data("kendoWindow");
+                
+        _window.title("TRAINING SCHEDULE");
+        _window.open(); 
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+
+        $.get(_url, {control:"Add"})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingCoordinatorDetails
+                    _window.content(_partialPage);
+                    window_details_Resize()
+                }
+            )
+    }
+    
+    function grid_onExcelExport(e) {
+        //var sheet = e.workbook.sheets[0];
+        
+        //// Add custom header rows to the exported Excel file
+        //sheet.rows.unshift(            
+        //    {}, // Add an empty row to create separation
+        //    {}, // Add another empty row
+        //    {}  // Add one more empty row
+        //);
+
+    }
+    
+    function CloseCancelWindow(){
+        $("#window_trainingCancellation").data("kendoWindow").close();  
+    }
+
+    
+    function scheduler_change(e) {     
+        var events = e.events; //list of selected Scheduler events
+         var _window = $("#window_details").data("kendoWindow");
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        debugger
+        if(events.length == 0){
+            return;
+        }       
+        
+        $("#window_details").data("kendoWindow").open();
+        $.get('@Url.Action("CheckIfAlreadyRegistered","TrainingRegistration")',{paramTrainingCode:events[0].Schedule.TrainingCode})
+        .done(
+            function (CheckIfAlreadyRegistered) {            
+                 $.get('@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")',{control: "View", code : events[0].ID})
+                 .done(
+                    function(_TrainingScheduleDetails){   
+                        $("#window_details").data("kendoWindow").content(_TrainingScheduleDetails);                        
+                        $("#window_details").data("kendoWindow").title(events[0].Schedule.TrainingCode);
+                        $("#window_details").data("kendoWindow").center()                        
+                        
+                        window_details_Resize()
+
+                        g_trainingCode = events[0].Schedule.TrainingCode;
+                        
+                        if(!CheckIfAlreadyRegistered.isExist)  {
+                            var _html = `<button type="submit" class="btn btn-info float-right" onclick="RegisterTraining()">Register</button>`;
+                            $("#btn_scheduleWindowClose").removeClass("float-right");
+                            $(".training-schedule-footer").prepend(_html);
+                        }
+                    }
+                )
+            }
+        )
+
+        
+    }    
+    
+    async function RegisterTraining(){
+        
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {            
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }
+
+        
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Do you want to register to the training?");
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }
+        $(".loadingSpinner").show();
+        $.post('@Url.Action("RegisterTraining","TrainingRegistration")', {paramTrainingCode: g_trainingCode})
+            .fail(
+                function (res){     
+                    $(".loadingSpinner").hide();  
+                    $mong.kendoAlertInfo(res.responseText);
+                    return
+                }   
+            )
+            .done(
+                function(data){                        
+                    $("#window_details").data("kendoWindow").close(); 
+                    var grid = $("#grid_trainingRegistrationList").data("kendoGrid");    
+                                        
+                    grid.dataSource.read().then(function () {
+                        grid.refresh();
+                    });                       
+                    $(".loadingSpinner").hide();
+                    $mong.kendoAlertInfo("Successfully registered.");      
+                    return
+                }
+            )
+    }
+
+    function grid_onClick_open(e){
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        //get Training Code
+        var _code = dataItem.RegistrationCode     
+        g_registrationCode = _code
+        //actions: GetTrainingRegistrationWindow
+        var _url = '@Url.Action("GetTrainingRegistrationWindow","TrainingRegistration")';        
+
+        var _window = $("#window_details").data("kendoWindow");
+                        
+        _window.title(_code);
+        _window.open();  
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"Open", code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage);       
+                _window.center();
+                window_details_Resize()
+                }
+            )
+    }
+   
+
+    function grid_onClick_cancel(e){
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        //get Training Code
+        var _code = dataItem.RegistrationCode
+        g_registrationCode = _code
+        //actions: GetTrainingScheduleWindow
+        var _url = '@Url.Action("GetTrainingRegistrationWindow","TrainingRegistration")';
+
+        var _window = $("#window_details").data("kendoWindow");
+                      
+        _window.title(_code);
+        _window.open();  
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"Cancel", code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage);     
+                _window.center();    
+                window_details_Resize()
+                }
+            )
+    }
+    
+    function grid_onClick_confirm(e){
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        //get Training Code
+        var _code = dataItem.RegistrationCode     
+        g_registrationCode = _code
+        //actions: GetTrainingScheduleWindow
+        var _url = '@Url.Action("GetTrainingRegistrationWindow","TrainingRegistration")';        
+
+        var _window = $("#window_details").data("kendoWindow");
+                      
+        _window.title(_code);
+        _window.open();   
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"Confirm", code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage);    
+                _window.center();   
+                window_details_Resize()     
+                }
+            )
+    }
+
+</script>

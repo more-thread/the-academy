@@ -1,0 +1,194 @@
+﻿@model TRS.ViewModels.TrainingCoordinatorViewModel
+@{
+    ViewData["Title"] = "Training Coordinator";
+    ViewBag.FormID = "TRMM-0002";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+
+<div class="card card-secondary">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-clipboard-list"></i>
+            Training Coordinator
+        </h3>
+    </div>
+    <div class="card-body">
+        @(Html.Kendo().Grid(Model.TrainingCoordinatorList)
+        .Name("grid_trainingCoordinatorList")
+        .HtmlAttributes(new {data_form = "Coordinator" })
+        .NoRecords()
+        .Height(500)
+        .Columns(columns =>
+        {
+            columns.Bound(m => m.EmployeeName).Title("EMPLOYEE NAME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+            columns.Bound(m => m.PositionName).Title("POSITION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+            columns.Command(command =>
+            {
+                command.Custom("Activate").Text(" ").IconClass("k-icon k-i-check-outline")
+                        .HtmlAttributes(new { @class = "k-button-solid-success btn_action_activate", data_action = "Active", 
+                                                title = "Activate" })
+                        .Click("grid_onClick_updateStatus");
+                command.Custom("Deactivate").Text(" ").IconClass("k-icon k-i-minus-outline")
+                        .HtmlAttributes(new { @class = "k-button-solid-primary btn_action_deactivate", data_action = "Inactive", 
+                                                title = "Deactivate" })
+                        .Click("grid_onClick_updateStatus");
+            }).Width(150).Title("ACTION")
+            .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+        })
+        .ToolBar(toolbar => {toolbar.Excel();toolbar.Search();}
+        )
+        .Editable(editable => editable
+        .Mode(GridEditMode.PopUp))
+        .Excel(excel => excel
+            .FileName("TrainingCoordinator.xlsx") // Specify the filename for the exported Excel file
+            .AllPages(true) // Enable export of all pages, including content before the grid
+            .Filterable(false)
+        )
+        .Events(events => events
+            .ExcelExport("onExcelExport")
+            .DataBound("onDataBound")        
+        ) // Attach the excelExport event
+        .Scrollable(s => s.Height("auto"))
+        .Pageable()
+        .DataSource(dataSource => dataSource
+            .Ajax()
+            .PageSize(20)
+            .ServerOperation(true)
+            .Read(read => read.Action("GetTrainingCoordinatorList", "TrainingCoordinator"))
+            .Model(model =>
+            {
+                model.Id(p => p.EmployeeNo);
+            })
+        )
+        .Resizable(resize => resize.Columns(true))
+        )        
+    </div>
+    <div class="card-footer">        
+        <button type="submit" class="btn btn-info float-right" onclick="openNewEntryWindow()">
+            Add Employee
+        </button>
+    </div>
+</div>
+
+
+<script>    
+    var g_paramEmployeeNo = "";
+    function onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+    debugger
+            if (model.Status == true) {
+                $(this).find(".btn_action_activate").prop("disabled", true);
+                $(this).find(".btn_action_activate").addClass("k-state-disabled");
+            }else{
+                $(this).find(".btn_action_deactivate").prop("disabled", true);
+                $(this).find(".btn_action_deactivate").addClass("k-state-disabled");
+            }
+        });
+    }
+
+    function onEmployeeChange(e){
+        g_paramEmployeeNo = this.value();
+
+        $.get('@Url.Action("GetEmployeePositionName", "TrainingCoordinator")', { paramEmployeeNo: g_paramEmployeeNo })
+        .done(
+            function (data) {
+                $("#txt_positionName").val(data.PositionName);
+            }
+        )
+    }
+
+    async function grid_onClick_updateStatus(e){
+
+        e.preventDefault();
+
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+
+        var _employeeNo = dataItem.EmployeeNo
+        var _status = e.currentTarget.dataset.action;
+        var _msg = ""
+
+        if(_status == "Active")
+            _msg = "Do you want to activate the employee as training coordinator?"
+        else
+            _msg = "Do you want to deactivate the employee as traning coordinator?"
+
+        //ask user
+        const result = await $mong.kendoConfirmationDialog(_msg);
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }    
+
+        //actions: GetTrainingProgramDetails | GetTrainingCourseDetails
+        var _url = '@Url.Action("SetTrainingCoordinatorStatus","TrainingCoordinator")';
+
+        
+        $.post(_url, {paramEmployeeNo: _employeeNo, paramStatus: _status})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(res){                    
+                    $mong.kendoAlertInfo("Successfully updated.");  
+
+                    var grid1 = $("#grid_trainingCoordinatorList").data("kendoGrid");                        
+                    grid1.dataSource.read().then(function () {
+                        grid1.refresh();
+                    });
+                }
+            )
+    }
+
+    function openNewEntryWindow() {          
+        var _url = _url = '@Url.Action("GetTrainingCoordinatorDetails","TrainingCoordinator")'; 
+        
+        var _window = $("#window_details").data("kendoWindow");
+
+        _window.setOptions({ width: 700 });
+        _window.title("TRAINING COORDINATOR");
+        _window.open(); 
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+
+        $.get(_url)
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingCoordinatorDetails
+                    _window.content(_partialPage);
+                    _window.center();    
+                    window_details_Resize()
+                }
+            )
+    }
+    
+    function onExcelExport(e) {
+        var sheet = e.workbook.sheets[0];
+        
+        
+        // Add custom header rows to the exported Excel file
+        sheet.rows.unshift(            
+            {}, // Add an empty row to create separation
+            {}, // Add another empty row
+            {}  // Add one more empty row
+        );
+
+    }
+    
+    function CloseWindow(){
+        $("#window_details").data("kendoWindow").close();   
+    }
+
+</script>

@@ -1,0 +1,277 @@
+@model TRS.ViewModels.TrainingProgramAndCourseViewModel
+
+<div class="form-group row" @(Model.FormControl.FormMode == "Edit"? "": "hidden")>
+    <label class="col-sm-4 col-form-label">Program Code:</label>
+    <div class="col-sm-8">
+        <input id="txt_programCode" type="text" class="form-control" placeholder="Program Code" value="@Model.TrainingProgram?.ProgramCode" disabled>
+    </div>
+</div>
+<div class="form-group row">
+    <label for="txt_programTitle" class="col-sm-4 col-form-label">Program Title:</label>
+    <div class="col-sm-8">        
+        @(Html.Kendo().DropDownList()        
+            .Name("dd_Program")
+            .HtmlAttributes(new {@class = Model.FormControl.Required})
+            .DataValueField("ProgramCode")
+            .DataTextField("ProgramTitle")
+            .Enable(Model.FormControl.AddOnlyEnabled)            
+            .Value(Model.TrainingProgram?.ProgramCode)
+            .DataSource(dataSource => dataSource                
+                .Read(read => read.Action("GetTrainingCourseProgramEnumList", "TrainingProgramAndCourse"))
+                )
+            .Events(e => e.Change("onProgramChange")) // Add this line
+            )
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-sm-4 col-form-label">Job Class:</label>
+    <div class="col-sm-8">
+        <style>
+            .k-input-values .k-chip-list {
+                display: inline-grid !important;
+                width: 100% !important
+            }
+        </style>
+
+        @(Html.Kendo().MultiSelect()        
+            .Name("multi_jobClass")            
+            .AutoClose(false)            
+            .DataValueField("JobClassCode")
+            .DataTextField("JobClassDescription")
+            .Enable(false)     
+            .AutoBind(true) // prevent initial binding
+            .BindTo(Model.JobClasses)     
+            .Value(Model.TrainingProgram?.JobClasses.Select(w => w.JobClassCode).ToArray())
+        )
+    </div>
+</div>
+<div class="form-group row" @(Model.FormControl.FormMode == "Edit"? "": "hidden")>
+    <label class="col-sm-4 col-form-label">Course Code:</label>
+    <div class="col-sm-8">
+        <input id="txt_courseCode" type="text" class="form-control" placeholder="Course Code" value="@Model.TrainingCourse?.CourseCode" disabled>
+    </div>
+</div>
+<div class="form-group row">
+    <label for="txt_courseTitle" class="col-sm-4 col-form-label">Course Title:</label>
+    <div class="col-sm-8">
+        <input id="txt_courseTitle" type="text" class="form-control @Model.FormControl.Required" placeholder="Course Title"          
+        value="@Model.TrainingCourse?.CourseTitle">
+    </div>
+</div>
+
+<div class="form-group row">
+    <label for="txt_courseDescription" class="col-sm-4 col-form-label">Course Description:</label>
+    <div class="col-sm-8">
+        <textarea id="txt_courseDescription" type="text" class="form-control @Model.FormControl.Required" placeholder="Course Description">@Model.TrainingCourse?.CourseDescription</textarea>
+    </div>
+</div>
+
+
+<div class="form-group row">
+    <label for="rad_preTest" class="col-sm-4 col-form-label">With Pre-Test?:</label>
+    <div class="col-sm-3">
+        <div class="form-group row" style="
+    margin-right: 0px;
+    margin-left: 0px;">
+            <div class="col-sm-12" style="display: flex;justify-content: space-between;">
+                <div class="icheck-success d-inline">
+                    <input type="radio" value="yes" name="rad_preTest" class="required-field"
+                        onchange="toggleRequiredField(this)" id="rad_PreTestYes" @(Model.TrainingCourse?.WithPreTest == true? "checked": "")>
+                    <label for="rad_PreTestYes">Yes:</label>
+                </div>
+                <div class="icheck-danger d-inline">
+                    <input type="radio" value="no" name="rad_preTest" @(Model.TrainingCourse?.WithPreTest == false? "checked": "")
+                        onchange="toggleRequiredField(this)" id="rad_PreTestNo">
+                    <label for="rad_PreTestNo">No:</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-5">
+        <div class="row">
+            <label for="txt" class="col-sm-5 col-form-label">Total Score:</label>
+            <div class="col-sm-7">
+                <input id="txt_preTotalScore" type="text" class="form-control pre-test-toggle" @(Model.TrainingCourse?.WithPreTest == false? "disabled": "")
+                    placeholder="Total Score" value="@Model.TrainingCourse?.PreTestTotalScore">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-group row">
+    <label for="rad_postTest" class="col-sm-4 col-form-label">With Post-Test?:</label>
+    <div class="col-sm-3">
+        <div class="form-group row" style="
+    margin-right: 0px;
+    margin-left: 0px;">
+            <div class="col-sm-12" style="display: flex;justify-content: space-between;">
+                <div class="icheck-success d-inline">
+                    <input type="radio" value="yes" name="rad_postTest" class="required-field" @(Model.TrainingCourse?.WithPostTest == true? "checked": "")
+                        onchange="toggleRequiredField(this)" id="rad_PostTestYes" >
+                    <label for="rad_PostTestYes">Yes:</label>
+                </div>
+                <div class="icheck-danger d-inline">
+                    <input type="radio" value="no" name="rad_postTest" @(Model.TrainingCourse?.WithPostTest == false? "checked": "")
+                        onchange="toggleRequiredField(this)" id="rad_PostTestNo">
+                    <label for="rad_PostTestNo">No:</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-5">
+        <div class="row">
+            <label for="txt" class="col-sm-5 col-form-label">Total Score:</label>
+            <div class="col-sm-7">
+                <input id="txt_postTotalScore" type="text" class="form-control post-test-toggle" @(Model.TrainingCourse?.WithPostTest == false? "disabled": "")
+                    placeholder="Total Score" value="@Model.TrainingCourse?.PostTestTotalScore">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-group row">
+    <label for="rad_evaluation" class="col-sm-4 col-form-label">360 Evaluation:</label>
+    <div class="col-sm-3">
+        <div class="form-group row" style="
+    margin-right: 0px;
+    margin-left: 0px;">
+            <div class="col-sm-12" style="display: flex; justify-content: space-between;">
+                <div class="icheck-success d-inline">
+                    <input type="radio" value="yes" name="rad_evaluation" class="required-field" @(Model.TrainingCourse?.WithEvaluation == true? "checked": "")
+                        id="rad_EvaluationYes">
+                    <label for="rad_EvaluationYes">Yes:</label>
+                </div>
+                <div class="icheck-danger d-inline">
+                    <input type="radio" value="no" name="rad_evaluation" @(Model.TrainingCourse?.WithEvaluation == false? "checked": "")
+                        id="rad_EvaluationNo">
+                    <label for="rad_EvaluationNo">No:</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="card-footer">
+    <div class="float-right">
+        <button type="submit" class="btn btn-info" onclick="AddEditCourse('@Model.FormControl.FormMode')">@(Model.FormControl.FormMode == "Add" ? "Add" : "Update")</button>
+        <button type="submit" class="btn btn-default" onclick="CloseWindow()">Cancel</button>
+    </div>
+</div>
+
+
+
+<script>
+    
+    function toggleRequiredField(radio) {
+        var toggleField 
+        if(radio.name == "rad_preTest")
+        toggleField = document.getElementsByClassName("pre-test-toggle");
+        else if(radio.name == "rad_postTest")
+        toggleField = document.getElementsByClassName("post-test-toggle");
+
+        
+        for (var i = 0; i < toggleField.length; i++) {
+            if (radio.value === "yes") {                                
+                toggleField[i].disabled = false;
+                toggleField[i].classList.add("required-field");
+            } else {
+                toggleField[i].value = "";
+                toggleField[i].disabled = true;
+                toggleField[i].classList.remove("required-field");
+                toggleField[i].classList.remove("is-invalid");
+            }
+        }
+    }
+
+    async function AddEditCourse(_control){
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {            
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }                
+
+        var _model = [];
+        _model.push({
+            CourseCode : $("#txt_courseCode").val(),
+            Program: {ProgramCode:$(dd_Program).data("kendoDropDownList").value()},
+            CourseTitle: $("#txt_courseTitle").val(),
+            CourseDescription: $("#txt_courseDescription").val(),
+            WithPreTest: ($("input[name='rad_preTest']:checked").val() === "yes")? true:false,
+            PreTestTotalScore: $("#txt_preTotalScore").val(),
+            WithPostTest: ($("input[name='rad_postTest']:checked").val() === "yes")? true:false,
+            PostTestTotalScore:  $("#txt_postTotalScore").val(),
+            WithEvaluation: ($("input[name='rad_evaluation']:checked").val() === "yes")? true:false
+        })
+
+        //check if title exists
+        $.get('@Url.Action("CheckIfCourseTitleExist", "TrainingProgramAndCourse")', { courseTitle: _model[0].CourseTitle })
+            .done(
+                async function (res) {        
+                
+                    if(res.isExist == true)  {                    
+                        const result = await $mong.kendoConfirmationDialog("Course title exists, do you wish to proceed with the " + (_control == "Add"? "new entry": "editing") +" of course?");
+                        //If user clicked NO, proceed below
+                        if (result !== true) {                        
+                            return;//exit
+                        }
+                    }else{                                                
+                        //ask user if want to proceed saving
+                        const result = await $mong.kendoConfirmationDialog("Are you sure you want to save record?");                        
+                        
+                        //If user clicked NO, proceed below
+                        if (result !== true) {                    
+                            return;//exit
+                        }                        
+                    }
+
+
+                    if(_control == "Add")
+                    {
+                        $.post('@Url.Action("AddCourse","TrainingProgramAndCourse")', {model: _model[0]})
+                        .fail(
+                            function (res){       
+                                $mong.kendoAlertInfo(res.responseText);
+                                return
+                            }   
+                        )
+                        .done(
+                            function(data){                        
+                                $("#window_details").data("kendoWindow").close(); 
+                                var grid = $("#grid_trainingCourseList").data("kendoGrid");       
+                                g_programCodeFilter = "" //reset the filter param
+                                grid.dataSource.read().then(function () {
+                                    grid.refresh();
+                                });                       
+                                $mong.kendoAlertInfo("Successfully added.");      
+                                return
+                            }
+                        )
+                    }                    
+                    else
+                    {
+                        $.post('@Url.Action("UpdateCourse","TrainingProgramAndCourse")', {model: _model[0]})    
+                        .fail(
+                            function (res){     
+                                $mong.kendoAlertInfo(res.responseText);
+                                return
+                            }
+                        )
+                        .done(
+                            function(data){                        
+                                $("#window_details").data("kendoWindow").close();   
+                                var grid = $("#grid_trainingCourseList").data("kendoGrid");    
+                                g_programCodeFilter = "" //reset the filter param                        
+                                grid.dataSource.read().then(function () {
+                                    grid.refresh();
+                                });                       
+                                $mong.kendoAlertInfo("Successfully updated.");      
+                                return
+                            }
+                        )
+                    }
+                }//end of .done function
+            )//end of .done
+    }//end of function
+
+</script>

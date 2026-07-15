@@ -1,0 +1,519 @@
+﻿@model TRS.ViewModels.TrainingProfileViewModel
+@{
+    ViewData["Title"] = "Training Profile";
+    ViewBag.FormID = "TRRR-0001";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+<style>
+    .k-grid .invalid-cell {
+        background-color: #ffcccc; /* Light red background */
+    }
+
+    .profile-training.active{background-color:orange !important}
+    
+    .TrainingFeedbackStatus_Clickable {
+        color: rgb(0, 145, 255) !important;
+        cursor: pointer;
+    }
+</style>
+
+
+
+@(Html.Kendo().Window()
+    .Name("window_feedbackdetails")
+    .Title("TRAINING FEEDBACK")    
+    .Draggable()
+    .Pinned(true)    
+    .Modal()
+    .Visible(false)
+    .Content(@<text>        
+    </text>)
+    .Width("97%")
+    .Height("97%")
+    .Actions(actions => actions.Close())
+)
+
+<div class="row">
+  <div class="col-md-3">
+  <div class="card card-secondary card-outline">
+    <div class="card-body box-profile">
+      <div class="text-center">
+        @if (Context.Session.GetString("SessionDisplayPic") != null)
+        {
+            var imageSrc = @Context.Session.GetString("SessionDisplayPic");            
+            
+            <img class="profile-user-img img-circle" src="@imageSrc" alt="User profile picture" width="100" height="100">
+        }
+        else
+        {
+            <img class="profile-user-img img-fluid img-circle" src="/dist/img/sample_pic.png" alt="User profile picture">
+        }
+        
+      </div>
+      <h3 class="profile-username text-center">@Model.EmployeeProfile.EmployeeName</h3>
+      <center>
+        <span class="text-muted">@Model.EmployeeProfile.PositionName</span>
+      </center>
+      <center>
+        <span class="text-muted">@Model.EmployeeProfile.DepartmentName</span>
+      </center>
+    </div>
+  </div>
+  <div class="card  card-outline">
+    <div class="card-header" style="display: flex; justify-content: center;">
+      <h3 class="card-title">FOR THE CURRENT YEAR</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-lg-12 col-12">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>@Model.TotalManDays / 313</h3>
+              <p>TOTAL MAN DAYS OF TRAINING</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-dumbbell"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12 col-12">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>@Model.CoursesTaken</h3>
+              <p>TOTAL COURSES TAKEN</p>
+            </div>
+            <div class="icon">
+              <i class="fa-solid fa-user-graduate"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="col-md-9">
+    <div class="card">
+      <div class="card-header p-2">
+        <ul class="nav nav-pills">
+          <li class="nav-item">
+            <a class="nav-link profile-training active" href="#my-training" data-toggle="tab">MY TRAINING</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link profile-training" href="#subordinate-training" data-toggle="tab">SUBORDINATE TRAININGS</a>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body">
+        <div class="tab-content">
+          <div class="tab-pane active" id="my-training">            
+            <div class="card ">
+                <div class="card-header" >
+                    <h3 class="card-title">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Training History
+                    </h3>
+                </div>
+                <div class="card-body p-0" style="display: block;">
+                    @(Html.Kendo().Grid(Model.TrainingRegistrationList)
+                                .Name("grid_trainingList")
+                                .HtmlAttributes(new {data_form = "Schedule"})
+                                .Height(446)
+                                .NoRecords()            
+                                .Columns(columns =>
+                                {
+                                    columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.TrainingCode).Title("TRAINING CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(220);   
+                                    columns.Bound(m => m.Attendance).Title("ATTENDANCE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(170);                   
+                                    columns.Bound(m => m.TrainingCompletionStatus).Title("TRAINING COMPLETION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(220);
+                                    columns.Bound(m => m.PostTestStatus).Title("POST TEST STATUS")
+                                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(170);                                                
+                                    columns.Bound(m => m.EvaluationScore).Title("EVALUATION SCORE")
+                                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(170);     
+                                    columns.Bound(m => m.TrainingFeedbackStatus).Title("TRAINING FEEDBACK STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .ClientTemplate("#if(Attendance == 'ABSENT'){##}else{##if(TrainingFeedbackStatus == 'COMPLETED'){##=TrainingFeedbackStatus##}else{#<a class='TrainingFeedbackStatus_Clickable' href='\\#' onclick='OpenFeedbackPage(\"#=RegistrationCode#\",\"#=TrainingFeedbackStatus#\");'>#=TrainingFeedbackStatus == null ? 'INCOMPLETE' : TrainingFeedbackStatus#</a>#}##}#")
+                                    .Width(280).Sticky();
+                                }).ToolBar(toolbar => {
+                                  toolbar.ClientTemplate("<div id='custom-toolbar-placeholder'></div>");
+                                }
+                                )
+                                .Scrollable(s => s.Height("auto"))
+                                .Pageable()
+                                .DataSource(dataSource => dataSource
+                                    .Ajax().Batch(true)
+                                    .PageSize(20)
+                                    .ServerOperation(false)
+                                    .Read(read => read.Action("GetTrainingListByEmployeeNo", "TrainingProfile").Data("ApplyFilterGrid"))          
+                                    .Model(model =>
+                                    {
+                                        model.Id(p => p.RegistrationCode);
+                                    })
+                                )
+                                .Events(events => events
+                                    .ExcelExport("grid_onExcelExport")
+                                    .DataBound("grid_onDataBound")        
+                                ) // Attach the excelExport event
+                                .Resizable(resize => resize.Columns(true))
+                                )
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" >
+                    <h3 class="card-title">
+                        <i class="fa-regular fa-thumbs-up"></i>
+                        Recommended Courses
+                    </h3>
+                </div>
+                <div class="card-body" style="display: block;">
+                    <p>You can learn new skills or expand your knowledge in a variety of professions with the aid of these courses, which cover a wide range of topics. You may choose the courses that are best for you based on your interests and career objectives.</p>
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="UpdateRecommendedTraining()">UPDATE RECOMMENDED TRAINING</button>
+                    <div style="margin-top: 10px;">
+                        @(Html.Kendo().Grid(Model.TrainingRegistrationList)
+                                .Name("grid_recommendedList")
+                                .Height(446)
+                                .NoRecords()            
+                                .Columns(columns =>
+                                {
+                                    columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.Course.CourseDescription).Title("COURSE DESCRIPTION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.CourseCompletionStatus).Title("COURSE COMPLETION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(220);  
+                                })
+                                .Scrollable(s => s.Height("auto"))
+                                .Pageable()
+                                .DataSource(dataSource => dataSource
+                                    .Ajax().Batch(true)
+                                    .PageSize(20)
+                                    .ServerOperation(false)
+                                    .Read(read => read.Action("GetRecommendedCourseList", "TrainingProfile"))          
+                                    .Model(model =>
+                                    {
+                                        model.Id(p => p.RegistrationCode);
+                                    })
+                                )
+                                .Resizable(resize => resize.Columns(true))
+                                )
+
+                    </div>
+                    
+                </div>
+            </div>
+          </div>
+
+          <div class="tab-pane" id="subordinate-training">
+            <div class="post">
+              <div class="row">  
+                <div class="col-6">
+                  <div class="k-d-flex k-justify-content-center" style="display: flex; align-items: baseline;">                    
+                    <label for="dd_EmployeeList">Subordinate: </label>
+                    &nbsp;
+                    &nbsp;
+                    @(Html.Kendo().DropDownList()        
+                                            .Name("dd_EmployeeList")
+                                            .OptionLabel(" ")
+                                            .Filter("contains")
+                                            .DataValueField("EmployeeNo")
+                                            .DataTextField("EmployeeName")         
+                                            .Events(ev => ev.Change("OnChange"))
+                                            .DataSource(dataSource => dataSource   
+                                                    .Read(read => read.Action("GetSubordinateList", "TrainingProfile")                            
+                                                    )
+                                                )
+                                            )
+                  </div>                 
+                </div>                
+              </div>              
+            </div>
+            
+            <div class="card">
+                <div class="card-header" >
+                    <h3 class="card-title">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Training History
+                    </h3>
+                </div>
+                 <div class="card-body p-0" style="display: block;">         
+                    <div>
+                        @(Html.Kendo().Grid(Model.TrainingRegistrationList)
+                                .Name("grid_subordinateTrainingList")
+                                .HtmlAttributes(new {data_form = "Schedule"})
+                                .Height(446)
+                                .NoRecords()            
+                                .Columns(columns =>
+                                {
+                                    columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.TrainingCode).Title("TRAINING CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(220);   
+                                    columns.Bound(m => m.Attendance).Title("ATTENDANCE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(170);                   
+                                    columns.Bound(m => m.TrainingCompletionStatus).Title("TRAINING COMPLETION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(220);
+                                    columns.Bound(m => m.PostTestStatus).Title("POST TEST STATUS")
+                                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(170);                                                
+                                    columns.Bound(m => m.EvaluationScore).Title("EVALUATION SCORE")
+                                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(170);     
+                                    columns.Bound(m => m.TrainingFeedbackStatus).Title("TRAINING FEEDBACK STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .ClientTemplate("<a class='TrainingFeedbackStatus_Clickable' href=\\# onclick=OpenFeedbackPage('#= RegistrationCode #','#= TrainingFeedbackStatus #');>#=  TrainingFeedbackStatus == null? 'INCOMPLETE':  TrainingFeedbackStatus #</a>")
+                                    .Width(280);
+                                })
+                                .Scrollable(s => s.Height("auto"))
+                                .Pageable()
+                                .DataSource(dataSource => dataSource
+                                    .Ajax().Batch(true)
+                                    .PageSize(20)
+                                    .ServerOperation(false)
+                                    .Read(read => read.Action("GetTrainingListByEmployeeNo", "TrainingProfile").Data("SubordinateFilter"))          
+                                    .Model(model =>
+                                    {
+                                        model.Id(p => p.RegistrationCode);
+                                    })
+                                ).AutoBind(false) // Add this line to prevent auto-binding
+                                .Events(events => events
+                                    .ExcelExport("grid_onExcelExport")
+                                    .DataBound("grid_onDataBound")        
+                                ) // Attach the excelExport event
+                                .Resizable(resize => resize.Columns(true))
+                                )
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" >
+                    <h3 class="card-title">
+                        <i class="fa-regular fa-thumbs-up"></i>
+                        Recommended Courses
+                    </h3>
+                </div>
+                <div class="card-body" style="display: block;">                    
+                    <div style="margin-top: 10px;">
+                        @(Html.Kendo().Grid(Model.TrainingRegistrationList)
+                                .Name("grid_subordinateRecommended")
+                                .HtmlAttributes(new {data_form = "Schedule"})
+                                .Height(446)
+                                .NoRecords()            
+                                .Columns(columns =>
+                                {
+                                    columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.TrainingSchedule.Course.CourseDescription).Title("COURSE DESCRIPTION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(180);   
+                                    columns.Bound(m => m.CourseCompletionStatus).Title("COURSE COMPLETION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+                                    .Width(220);  
+                                })
+                                .Scrollable(s => s.Height("auto"))
+                                .Pageable()
+                                .DataSource(dataSource => dataSource
+                                    .Ajax().Batch(true)
+                                    .PageSize(20)
+                                    .ServerOperation(false)
+                                    .Read(read => read.Action("GetRecommendedCourseList", "TrainingProfile").Data("SubordinateFilter"))
+                                    .Model(model =>
+                                    {
+                                        model.Id(p => p.RegistrationCode);
+                                    })
+                                ).AutoBind(false) // Add this line to prevent auto-binding
+                                .Events(events => events
+                                    .ExcelExport("grid_onExcelExport")
+                                    .DataBound("grid_onDataBound")        
+                                ) // Attach the excelExport event
+                                .Resizable(resize => resize.Columns(true))
+                                )
+
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+    var g_trainingCode = "",
+        g_registrationCode = "";
+
+    var g_programCodeFilter = "", g_courseCodeFilter = "";
+
+    $(document).ready(function () {
+        var customToolbarPlaceholder = $("#custom-toolbar-placeholder");
+
+        var filtersContainer = $("<div style='display:flex;flex:auto;align-items: center;margin-left:10px;margin-right: auto; padding: 10px;'>Filters: </div>").prependTo(customToolbarPlaceholder);
+
+        var programFilter = $("<div style='margin-right:10px;margin-left:10px;width:300px;'></div>").appendTo(filtersContainer);
+        var courseFilter = $("<div style='margin-right:10px;width:300px;'></div>").appendTo(filtersContainer);
+        var coureseApplyFiltersButton = $("<button class='k-button k-button-solid-primary k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button'>Apply Filters</button>").appendTo(filtersContainer);
+
+        programFilter.kendoDropDownList({
+            dataTextField: "ProgramTitle",
+            dataValueField: "ProgramCode",  
+            width: 500,
+			optionLabel: 'PROGRAM',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingProgramEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        courseFilter.kendoDropDownList({
+            dataTextField: "CourseTitle",
+            dataValueField: "CourseCode",
+            width: 500,
+			optionLabel: 'COURSE',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingCourseEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        coureseApplyFiltersButton.click(function () {
+            // apply the filters to the grid
+            g_courseCodeFilter = courseFilter.data("kendoDropDownList").value();
+            g_programCodeFilter = programFilter.data("kendoDropDownList").value();
+          
+            var grid = $("#grid_trainingList").data("kendoGrid");
+            grid.dataSource.read();
+        });
+    });
+
+    function ApplyFilterGrid(){
+        return {            
+            paramProgramCode : g_programCodeFilter,
+            paramCourseCode : g_courseCodeFilter
+        }
+    }
+
+    function SubordinateFilter(){
+        return {
+          paramEmployeeNo: $("#dd_EmployeeList").val(),
+        }    
+    }
+
+    function OnChange(){         
+        var grid = $("#grid_subordinateRecommended").data("kendoGrid");    
+                            
+        grid.dataSource.read().then(function () {
+            grid.refresh();
+        });                        
+        
+        var grid1 = $("#grid_subordinateTrainingList").data("kendoGrid");    
+                            
+        grid1.dataSource.read().then(function () {
+            grid1.refresh();
+        });                     
+    }
+
+    function grid_onExcelExport(e) {
+        var sheet = e.workbook.sheets[0];
+        
+        
+        // Add custom header rows to the exported Excel file
+        sheet.rows.unshift(            
+            {}, // Add an empty row to create separation
+            {}, // Add another empty row
+            {}  // Add one more empty row
+        );
+
+    }
+    
+    function UpdateRecommendedTraining(){    
+        var grid = $("#grid_recommendedList").data("kendoGrid");    
+                                      
+        grid.dataSource.read().then(function () {
+            grid.refresh();
+        });    
+
+        //$.post('@Url.Action("UpdateRecommendedTraining","TrainingProfile")')
+        //  .fail(
+        //      function (res){       
+        //          $mong.kendoAlertInfo(res.responseText);
+        //          return
+        //      }   
+        //  )
+        //  .done(
+        //      function(data){                        
+        //          var grid = $("#grid_recommendedList").data("kendoGrid");    
+                                      
+        //          grid.dataSource.read().then(function () {
+        //              grid.refresh();
+        //          });                       
+
+        //      }
+        //  )
+    }
+
+    function OpenFeedbackPage(registrationCode,feedbackStatus){
+        g_registrationCode = registrationCode
+        if(feedbackStatus == "COMPLETED"){
+
+        }else{
+            var _url = '@Url.Action("GetTrainingFeedbackDetails","TrainingFeedback")';        
+
+            var _window = $("#window_feedbackdetails").data("kendoWindow");
+                            
+            _window.open();  
+            //add spinner
+            kendo.ui.progress(_window.element, true);
+            
+            //get the partial page and place it in window content
+            $.get(_url, {control:"Open", code:registrationCode})
+                .fail(
+                    function(res){                    
+                        $mong.kendoAlertInfo(res.responseText);  
+                    }
+                )
+                .done(
+                    function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                    _window.content(_partialPage);       
+                    _window.center();   
+                    window_details_Resize()
+                    }
+                )
+        }
+    }
+
+    function grid_onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+            if(model.TrainingFeedbackStatus == "COMPLETED"){
+                $(".TrainingFeedbackStatus_Clickable").addClass('disabled');
+                $(".TrainingFeedbackStatus_Clickable").removeAttr("onclick");    
+            }
+        });
+    }
+
+</script>

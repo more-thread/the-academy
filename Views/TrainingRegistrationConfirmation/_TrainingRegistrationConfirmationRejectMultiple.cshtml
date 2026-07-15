@@ -1,0 +1,83 @@
+<div class="form-group row">
+    <label class="col-sm-4 col-form-label">Reason:</label>
+    <div class="col-sm-8">
+        @* <textarea rows="3" class="form-control required-field" placeholder="Reason" id="txtReason"></textarea> *@
+        @(Html.Kendo().TextArea()
+            .Name("txtReason")
+            .Rows(4)
+            .Enable(true)                      
+            .HtmlAttributes(new { style = "width: 100%", @class = "required-field", data_required_msg = "Reason", data_max_msg= "Enter value between 1 and 200" })
+        )
+    </div>
+</div>
+<div class="card-footer">
+    <div class="float-right">
+        <button type="submit" class="btn btn-default" onclick="CloseCancelWindow()">Cancel</button>
+        <button type="submit" class="btn btn-info" onclick="Confirm()">Confirm</button>        
+    </div>
+</div>
+
+<script>
+
+    async function Confirm() {
+
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }
+
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Are you sure you want to save record?");
+
+        //If user clicked NO, proceed below
+        if (result !== true) {
+            return;//exit
+        }
+
+        var _reason = $("#txtReason").val();
+        
+        var checkedValues = [];
+        $("#grid_traineeList input[name='checkedRecords']:checked").each(function () {
+            checkedValues.push($(this).val());
+        });
+
+        var promises = [];
+        $.each(checkedValues, function (index, value) {
+            promises.push($.post('@Url.Action("ConfirmRejectRegistration","TrainingRegistrationConfirmation")', {paramCode: value, paramReason:_reason, paramConfirm: "Deny"}));
+        })
+
+        try {
+            await Promise.all(promises);
+        } catch (error) {
+            $mong.kendoAlertInfo("Something went wrong. If this is not your first time seeing this, please report this to an IT Administrator");                      
+            return;
+        }
+        
+        $.post('@Url.Action("SendRejectedGroupEmailReminder","TrainingRegistrationConfirmation")', {paramRegCode:checkedValues,trainingCode:g_trainingCode, reason:_reason})
+            .fail(
+                function(res){
+                    $mong.kendoAlertInfo("Something went wrong. If this is not your first time seeing this, please report this to an IT Administrator");  
+                    
+                }
+            )
+            @* .done(
+                function(_partialPage){                     
+                    $mong.kendoAlertInfo("Email sent.");    
+                }
+            ) *@
+
+        var grid = $("#grid_traineeList").data("kendoGrid");                     
+
+        grid.dataSource.read().then(function () {
+            grid.refresh();
+        });
+        $mong.kendoAlertInfo("Successfully denied.");    
+        var _window = $("#window_trainingCancellation").data("kendoWindow");
+        _window.close()
+            
+        return
+    }
+
+
+</script>

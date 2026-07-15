@@ -1,0 +1,32 @@
+<table class="table table-borderless" style="padding: 1px !important;">
+        <tbody>
+        <tr>
+            <td style="text-align:right; padding: 1px !important;">Page Name :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@FormService.PageAbout?.FormName</td>
+        </tr>
+        <tr>
+            <td style="text-align:right; padding: 1px !important;">Page ID :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@FormService.PageAbout?.FormID</td>
+        </tr>
+        <tr>
+            <td style="text-align:right;padding: 1px !important;">Version No :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@FormService.PageAbout?.CurrentVersion</td>
+        </tr>
+        <tr>
+            <td style="text-align:right;padding: 1px !important;">Accessible Description :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@FormService.PageAbout?.AccessibleDescription</td>
+        </tr>
+        <tr>
+            <td style="text-align:right;padding: 1px !important;">Date Modified :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@FormService.PageAbout?.DateModified</td>
+        </tr>
+        <tr>
+            <td style="text-align:right;padding: 1px !important; width: 30%;">Dev. Originator :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@FormService.PageAbout?.DevInitials</td>
+        </tr>
+        <tr>
+            <td style="text-align:right;padding: 1px !important;">Dev. Support :</td>
+            <td style="text-align:left; font-weight:bold; padding: 1px !important;">@Html.Raw(FormService.PageAbout?.DevInfo.Replace("&lt;br /&gt;", "<br/>"))</td>
+        </tr>
+    </tbody>
+</table>

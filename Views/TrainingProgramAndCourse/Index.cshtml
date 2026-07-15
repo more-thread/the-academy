@@ -1,0 +1,441 @@
+﻿@model TRS.ViewModels.TrainingProgramAndCourseViewModel
+@{
+    ViewData["Title"] = "Program and Course Maintenance";
+    ViewBag.FormID = "TRMM-0001";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+<div class="card card-secondary">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-clipboard-list"></i>
+            Programs
+        </h3>
+    </div>
+    <div class="card-body">
+        @(
+            Html.Kendo().Grid(Model.TrainingProgramList)
+            .Name("grid_trainingProgramList")
+            .HtmlAttributes(new {data_form = "Program" })
+            .NoRecords()
+            .Height(500)
+            .Columns(columns =>
+            {
+                columns.Bound(m => m.ProgramCode).Title("PROGRAM CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                columns.Bound(m => m.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;"});
+                columns.Bound(m => m.FormattedJobClasses).Title("JOB CLASS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                columns.Bound(m => m.FormattedStatus).Title("PROGRAM STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });       
+                columns.Command(command =>
+                {
+                    command.Custom("Edit").Text(" ").IconClass("k-icon k-i-pencil")
+                            .HtmlAttributes(new {title = "Edit" })
+                            .Click("grid_onClick_edit");
+                    command.Custom("Activate").Text(" ").IconClass("k-icon k-i-check-outline")
+                            .HtmlAttributes(new { @class = "k-button-solid-success btn_action_activate",
+                            title = "Activate" ,
+                            data_action = "Active"})
+                            .Click("grid_onClick_updateStatus");
+                    command.Custom("Deactivate").Text(" ").IconClass("k-icon k-i-minus-outline")
+                            .HtmlAttributes(new { @class = "k-button-solid-primary btn_action_deactivate",
+                            title = "Deactivate" ,
+                            data_action = "Inactive"})
+                            .Click("grid_onClick_updateStatus");
+                }).Width(150).Title("ACTION")
+                .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+            })
+            .ToolBar(toolbar => toolbar.Excel())
+            .Editable(editable => editable
+            .Mode(GridEditMode.PopUp))
+            .Excel(excel => excel
+                .FileName("ProgramList.xlsx") // Specify the filename for the exported Excel file
+                .AllPages(true) // Enable export of all pages, including content before the grid
+                .Filterable(false)
+            )
+            .Events(events => events
+                .ExcelExport("onExcelExport")
+                .DataBound("onDataBound")        
+            ) // Attach the excelExport event
+            .Scrollable(s => s.Height("auto"))
+            .Pageable()
+            .DataSource(dataSource => dataSource
+                .Ajax()
+                .PageSize(20)
+                .ServerOperation(true)
+                .Read(read => read.Action("GetTrainingProgramList", "TrainingProgramAndCourse").Data("ApplyFilterProgram"))
+                .Model(model =>
+                {
+                    model.Id(p => p.ProgramCode);
+                })
+            )
+            .Resizable(resize => resize.Columns(true))
+            )        
+    </div>
+    <div class="card-footer">        
+        <button type="submit" class="btn btn-info float-right" onclick="openNewEntryWindow('Program')">
+            Add Program
+        </button>
+    </div>
+</div>
+
+<div class="card card-secondary">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-book"></i>
+            Courses
+        </h3>
+    </div>
+    <div class="card-body">
+        @(
+            Html.Kendo().Grid(Model.TrainingCourseList)
+                .Name("grid_trainingCourseList")
+                .HtmlAttributes(new {data_form = "Course" })
+                .NoRecords()
+                .Height(500)
+                .Columns(columns =>
+                {
+                    columns.Bound(m => m.Program.ProgramCode).Title("PROGRAM CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                    columns.Bound(m => m.Program.ProgramTitle).Title("PROGRAM TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });                
+                    columns.Bound(m => m.CourseCode).Title("COURSE CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                    columns.Bound(m => m.CourseTitle).Title("COURSE TITLE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                    columns.Bound(m => m.Program.FormattedJobClasses).Title("JOB CLASS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+                    columns.Bound(m => m.PreTestTotalScore).Title("PRE-TEST TOTAL SCORE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });            
+                    columns.Bound(m => m.PostTestTotalScore).Title("POST-TEST TOTAL SCORE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });            
+                    columns.Bound(m => m.FormattedWithEvaluation).Title("360 EVALUATION").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });      
+                    columns.Command(command =>
+                    {                
+                        command.Custom("Edit").Text(" ").IconClass("k-icon k-i-pencil")
+                                .HtmlAttributes(new {title = "Edit" })
+                                .Click("grid_onClick_edit");
+                        command.Custom("Activate").Text(" ").IconClass("k-icon k-i-check-outline")
+                                .HtmlAttributes(new { @class = "k-button-solid-success btn_action_activate", 
+                                title = "Activate",
+                                data_action = "Active"})
+                                .Click("grid_onClick_updateStatus");
+                        command.Custom("Deactivate").Text(" ").IconClass("k-icon k-i-minus-outline")
+                                .HtmlAttributes(new { @class = "k-button-solid-primary btn_action_deactivate",
+                                title = "Deactivate",
+                                data_action = "Inactive"})
+                                .Click("grid_onClick_updateStatus");
+                    }).Width(150).Title("ACTION")
+                    .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+            })
+            .ToolBar(toolbar =>
+            {
+                toolbar.Excel().HtmlAttributes(new { @class = "k-toolbar-item" });
+            })
+            .Editable(editable => editable
+                .Mode(GridEditMode.PopUp)
+            )
+            .Excel(excel => excel
+                .FileName("CourseList.xlsx") // Specify the filename for the exported Excel file
+                .AllPages(true) // Enable export of all pages, including content before the grid
+                .Filterable(false)
+            )
+            .Events(events => events
+                .ExcelExport("onExcelExport") // Attach the excelExport event
+                .DataBound("onDataBound")        
+            )
+            .Scrollable(s => s.Height("auto"))
+            .Pageable()
+            .DataSource(dataSource => dataSource
+                .Ajax()
+                .PageSize(20)
+                .ServerOperation(false)
+                .Read(read => read.Action("GetTrainingCourseList", "TrainingProgramAndCourse").Data("ApplyFilterCourse"))
+                .Model(model =>
+                {
+                    model.Id(p => p.CourseCode);
+                })
+            )
+            .Resizable(resize => resize.Columns(true))
+            )
+    </div>
+    
+    <div class="card-footer">
+        <button type="submit" class="btn btn-info float-right" onclick="openNewEntryWindow('Course')">            
+            Add Course
+        </button>
+    </div>
+</div>
+<script>
+    var g_jobClassCodeFilter = [], g_programCodeFilter = "", g_courseCodeFilter = "";
+
+    $(document).ready(function () {
+        var toolbar = $("#grid_trainingProgramList").find(".k-toolbar");
+        var filtersContainer = $("<div style='display:flex;flex:auto;align-items: center;margin-left:10px;margin-right: auto;'>Filters: </div>").prependTo(toolbar);
+
+        var jobClassFilter = $("<div style='margin-right:10px;margin-left:10px; width:300px;'></div>").appendTo(filtersContainer);
+        var programFilter = $("<div style='margin-right:10px; width:300px;'></div>").appendTo(filtersContainer);
+        var applyFiltersButton = $("<button class='k-button k-button-solid-primary k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button'>Apply Filters</button>").appendTo(filtersContainer);
+
+        jobClassFilter.kendoMultiSelect({
+            dataTextField: "JobClassDescription",
+            dataValueField: "JobClassCode",            
+            autowidth: true,
+            placeholder: "JOB CLASS",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetHRJobClassList","TrainingProgramAndCourse"))',                        
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        programFilter.kendoDropDownList({
+            dataTextField: "ProgramTitle",
+            dataValueField: "ProgramCode",  
+            width: 500,
+			optionLabel: 'PROGRAM',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingProgramEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+
+        applyFiltersButton.click(function () {
+            // apply the filters to the grid
+            g_jobClassCodeFilter = jobClassFilter.data("kendoMultiSelect").value()
+            g_programCodeFilter  = programFilter.data("kendoDropDownList").value()
+
+            var grid = $("#grid_trainingProgramList").data("kendoGrid");
+            grid.dataSource.read();
+        });
+
+        var toolbar = $("#grid_trainingCourseList").find(".k-toolbar");
+        var filtersContainer = $("<div style='display:flex;flex:auto;align-items: center;margin-left:10px;margin-right: auto;'>Filters: </div>").prependTo(toolbar);
+
+        var courseProgramFilter = $("<div style='margin-right:10px;margin-left:10px;width:300px;'></div>").appendTo(filtersContainer);
+        var courseFilter = $("<div style='margin-right:10px;width:300px;'></div>").appendTo(filtersContainer);
+        var coureseApplyFiltersButton = $("<button class='k-button k-button-solid-primary k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button'>Apply Filters</button>").appendTo(filtersContainer);
+
+        courseProgramFilter.kendoDropDownList({
+            dataTextField: "ProgramTitle",
+            dataValueField: "ProgramCode",  
+            width: 500,
+			optionLabel: 'PROGRAM',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingProgramEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        courseFilter.kendoDropDownList({
+            dataTextField: "CourseTitle",
+            dataValueField: "CourseCode",
+            width: 500,
+			optionLabel: 'COURSE',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingCourseEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        coureseApplyFiltersButton.click(function () {
+            // apply the filters to the grid
+            g_courseCodeFilter = courseFilter.data("kendoDropDownList").value();
+            g_programCodeFilter = courseProgramFilter.data("kendoDropDownList").value();
+          
+            var grid = $("#grid_trainingCourseList").data("kendoGrid");
+            grid.dataSource.read();
+        });
+    });
+    
+    function onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+    
+            if (model.Status == true) {
+                $(this).find(".btn_action_activate").prop("disabled", true);
+                $(this).find(".btn_action_activate").addClass("k-state-disabled");
+            }else{
+                $(this).find(".btn_action_deactivate").prop("disabled", true);
+                $(this).find(".btn_action_deactivate").addClass("k-state-disabled");
+            }
+        });
+    }
+
+    function ApplyFilterProgram(){
+        return {
+            JobClassCodeFilterArr : g_jobClassCodeFilter,
+            paramProgramCode: g_programCodeFilter
+        }
+    }
+
+    function ApplyFilterCourse(){
+        return {            
+            paramProgramCode : g_programCodeFilter,
+            paramCourseCode : g_courseCodeFilter
+        }
+    }
+
+    function grid_onClick_edit(e){
+
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+        
+        //form: Program | Course
+        var _form = e.delegateTarget.dataset.form;
+        //get ProgramCode | CourseCode
+        var _code = (_form == "Program"? dataItem.ProgramCode : dataItem.CourseCode);        
+        //actions: GetTrainingProgramDetails | GetTrainingCourseDetails
+        var _url = '@Url.Action("GetTraining_form_Details","TrainingProgramAndCourse")'.replace("_form_",_form);        
+
+        var _window = $("#window_details").data("kendoWindow");
+                
+        _window.title(_form.toUpperCase());
+        _window.open();      
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"Edit", code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage);    
+                _window.center();  
+                window_details_Resize()
+                }
+            )
+    }
+
+    async function grid_onClick_updateStatus(e){
+
+        e.preventDefault();
+        
+
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+        
+        //form: Program | Course
+        var _form = e.delegateTarget.dataset.form;      
+
+        //get ProgramCode | CourseCode
+        var _code = (_form == "Program"? dataItem.ProgramCode : dataItem.CourseCode);    
+        var _status = e.currentTarget.dataset.action;
+        var _msg = ""
+
+        if(_status == "Active")
+            _msg = "Do you want to activate this program"
+        else
+            _msg = "If you deactivate this program, this will automatically deactivate the courses under this program. Do you want to deactivate this program?"
+
+        //ask user
+        const result = await $mong.kendoConfirmationDialog(_msg);
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }    
+
+        //actions: SetTrainingProgramStatus | SetTrainingCourseStatus
+        var _url = '@Url.Action("SetTraining_form_Status","TrainingProgramAndCourse")'.replace("_form_",_form);        
+
+        
+        $.post(_url, {paramCode: _code, paramStatus: _status})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(res){                    
+                    $mong.kendoAlertInfo("Successfully updated.");  
+
+                    var grid1 = $("#grid_trainingProgramList").data("kendoGrid");                        
+                    grid1.dataSource.read().then(function () {
+                        grid1.refresh();
+                    });     
+
+                    var grid2 = $("#grid_trainingCourseList").data("kendoGrid");                        
+                    grid2.dataSource.read().then(function () {
+                        grid2.refresh();
+                    });                     
+                }
+            )
+    }
+
+    function openNewEntryWindow(_form) {  //form: Program | Course
+        //actions: GetTrainingProgramDetails | GetTrainingCourseDetails
+        var _url = _url = '@Url.Action("GetTraining_form_Details","TrainingProgramAndCourse")'.replace("_form_",_form); 
+        
+        var _window = $("#window_details").data("kendoWindow");
+                
+        _window.setOptions({ width: 700 });
+        _window.title(_form.toUpperCase()); //change window title to PROGRAM or COURSE
+        _window.open(); 
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+
+        $.get(_url, {control:"Add"})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                    _window.content(_partialPage);
+                    _window.center();    
+                    window_details_Resize()
+                }
+            )
+    }
+    
+    function onExcelExport(e) {
+
+    }
+    
+    function CloseWindow(){
+        $("#window_details").data("kendoWindow").close();   
+    }
+    
+    function ApplyFilterJobClasses(){
+        return {
+            paramProgramCode : g_programCodeFilter
+        }
+    }
+    
+    function onProgramChange(e) {          
+        g_programCodeFilter = this.value();
+        var multiSelect = $("#multi_jobClass").data("kendoMultiSelect");
+        
+        $.ajax({
+            type: "GET",
+            url: '@Url.Action("GetTrainingProgramJobClassesByCode", "TrainingProgramAndCourse")',
+            data: { paramProgramCode: g_programCodeFilter },
+            success: function (data) {
+                var jobClasses = data;
+
+                if(jobClasses == null || jobClasses == "")                
+                    multiSelect.value([]);
+                else
+                    multiSelect.value(jobClasses.map(function (item) { return item.JobClassCode; }));
+            }
+        });
+    }
+            
+</script>

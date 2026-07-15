@@ -1,0 +1,419 @@
+﻿@model TRS.ViewModels.TrainingScheduleViewModel
+@{
+    ViewData["Title"] = "Trainee Registration";
+    ViewBag.FormID = "TRTT-0003";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+@(Html.Kendo().Window()
+    .Name("window_trainingCancellation")
+    .Title("TITLE")    
+    .Draggable()
+    .Pinned(true)    
+    .Modal()
+    .Visible(false)
+    .Content(@<text>  
+        
+    </text>)    
+    .Width(500)
+    .Actions(actions => actions.Close())
+)
+
+<div class="card card-secondary">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-calendar"></i>
+            Available Training Schedule
+        </h3>
+    </div>
+    <div class="card-body">
+        
+            <div class="overlay-wrapper">
+                <div class="overlay dark loadingSpinner" style="display: none;"><i class="fas fa-3x fa-sync-alt fa-spin"></i></div>
+            @(Html.Kendo().Grid(Model.TrainingScheduleList)
+        .Name("grid_trainingScheduleList")
+        .HtmlAttributes(new {data_form = "Schedule" })
+        .NoRecords()
+        .Height(500)
+        .Columns(columns =>
+        {
+            columns.Bound(m => m.Program).Title("PROGRAM").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+            .ClientTemplate("#= Program ? Program.ProgramTitle : '' #").Width(180);
+            columns.Bound(m => m.Course).Title("COURSE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+            .ClientTemplate("#= Course ? Course.CourseTitle : '' #").Width(180);   
+            columns.Bound(m => m.TrainingCode).Title("TRAINING CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(220);      
+            columns.Bound(m => m.StartDate).Title("DATE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(180)
+            .ClientTemplate("#= kendo.toString(new Date(StartDate), 'MM/dd/yyyy') # - #= kendo.toString(new Date(EndDate), 'MM/dd/yyyy')#");
+            columns.Bound(m => m.StartTime).Title("TIME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(150)
+            .ClientTemplate("#= StartTime # - #= EndTime #");      
+            columns.Bound(m => m.Program).Title("JOB CLASS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(300)
+            .ClientTemplate("#= Program ? Program.JobClasses.map(function(item) { return item.JobClassDescription; }).join(', ') : '' # #= AdditionalJobClasses != '' ? AdditionalJobClasses.map(function(item) { return item.JobClassDescription; }).join(', ') : '' #");
+            columns.Bound(m => m.RegistrationStatus).Title("REGISTRATION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" }).Width(270);      
+            columns.Command(command =>
+            {
+                command.Custom("Register").Text(" ").IconClass("fa fa-user-plus")
+                        .HtmlAttributes(new { @class = "k-button-outline-info btn_action_register", title = "Register"})
+                        .Click("grid_onClick_register");
+                command.Custom("Export").Text(" ").IconClass("k-icon k-i-file-excel")
+                        .HtmlAttributes(new { @class = "k-button-outline-warning btn_action_export", title="Export to Excel"})
+                        .Click("grid_onClick_export");
+            }).Width(120).Title("ACTION").Sticky()
+            .HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" });
+        })
+        .ToolBar(toolbar => {toolbar.Excel();}
+        )
+        .Editable(editable => editable
+        .Mode(GridEditMode.PopUp))
+        .Excel(excel => excel
+            .FileName("TraineeRegistration.xlsx") // Specify the filename for the exported Excel file
+            .AllPages(true) // Enable export of all pages, including content before the grid
+            .Filterable(false)
+        )
+        .Events(events => events
+            .ExcelExport("grid_onExcelExport")    // Attach the excelExport event
+            .DataBound("onDataBound")   
+        ) // Attach the excelExport event
+        .Scrollable(s => s.Height("auto"))
+        .Pageable()
+        .DataSource(dataSource => dataSource
+            .Ajax()
+            .PageSize(20)
+            .ServerOperation(true)
+            .Read(read => read.Action("GetTrainingScheduleList", "TraineeRegistration").Data("ApplyFilterGrid"))
+            .Model(model =>
+            {
+                model.Id(p => p.TrainingCode);
+            })
+        )
+        .Resizable(resize => resize.Columns(true))
+        )    
+            </div>            
+    </div>
+</div>
+
+<script>
+    var g_trainingCode = "",
+        g_registrationCode = "";
+
+
+    var g_programCodeFilter = "", 
+        g_courseCodeFilter = "",
+        g_regionCodeFilter = "",
+        g_jobClassCodeFilter = "";
+
+    $(document).ready(function () {
+
+        var customToolbarPlaceholder = $("#custom-toolbar-placeholder");
+
+        var toolbar = $("#grid_trainingScheduleList").find(".k-toolbar");
+        var filtersContainer = $("<div style='display:flex;flex:auto;align-items: center;margin-left:10px;margin-right: auto; padding: 10px;'>Filters: </div>").prependTo(toolbar);
+
+        var programFilter = $("<div style='margin-right:10px;margin-left:10px;width:200px;'></div>").appendTo(filtersContainer);
+        var courseFilter = $("<div style='margin-right:10px;width:200px;'></div>").appendTo(filtersContainer);        
+        var regionFilter = $("<div style='margin-right:10px;width:150px;'></div>").appendTo(filtersContainer);
+        var jobClassFilter = $("<div style='margin-right:10px;width:150px;'></div>").appendTo(filtersContainer);
+        var ApplyFiltersButton = $("<button class='k-button k-button-solid-primary k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button'>Apply Filters</button>").appendTo(filtersContainer);
+
+        programFilter.kendoDropDownList({
+            dataTextField: "ProgramTitle",
+            dataValueField: "ProgramCode",  
+            width: 500,
+			optionLabel: 'PROGRAM',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingProgramEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        courseFilter.kendoDropDownList({
+            dataTextField: "CourseTitle",
+            dataValueField: "CourseCode",
+            width: 500,
+			optionLabel: 'COURSE',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingCourseEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        //TODO REGION
+        regionFilter.kendoDropDownList({
+            dataTextField: "Region",
+            dataValueField: "Region",
+            width: 300,
+			optionLabel: 'REGION',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetHRRegionList","TrainingSchedule"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+        
+        
+        jobClassFilter.kendoMultiSelect({
+            dataTextField: "JobClassDescription",
+            dataValueField: "JobClassCode",            
+            autowidth: true,
+            placeholder: "JOB CLASS",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetHRJobClassList","TrainingProgramAndCourse"))',                        
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        ApplyFiltersButton.click(function () {
+            // apply the filters to the grid
+            g_courseCodeFilter = courseFilter.data("kendoDropDownList").value();
+            g_programCodeFilter = programFilter.data("kendoDropDownList").value();
+            g_regionCodeFilter = regionFilter.data("kendoDropDownList").value();
+            g_jobClassCodeFilter = jobClassFilter.data("kendoMultiSelect").value()
+          
+            // Check if any of the filters have a value selected
+            if (g_courseCodeFilter !== "" || 
+                g_programCodeFilter !== "" ||  
+                g_regionCodeFilter !== "" ||                 
+                g_jobClassCodeFilter.length > 0 ) {
+                
+                // if the filters are not empty, apply them to the grid
+                var grid = $("#grid_trainingScheduleList").data("kendoGrid");
+                grid.dataSource.read();
+            } else {
+                // Show an alert if no filters are selected
+                $mong.kendoAlertInfo("Please select at least one from the filter options.");
+                return;
+            }
+
+        });
+
+    });
+
+    function ApplyFilterGrid(){
+        return {            
+            paramProgramCode : g_programCodeFilter,
+            paramCourseCode : g_courseCodeFilter,
+            paramRegionCode : g_regionCodeFilter,
+            JobClassCodeFilterArr : g_jobClassCodeFilter
+        }
+    }
+    
+    function grid_onClick_register(e){
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        //get Training Code
+        var _code = dataItem.TrainingCode     
+        g_trainingCode = _code
+        var _window = $("#window_details").data("kendoWindow");                     
+        _window.title("TRAINEE REGISTRATION CONFIRMATION");
+        _window.setOptions({ width: "95%",height:"800px" }); // set width to 800px
+        _window.open();       
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+
+         //get the partial page and place it in window content
+        $.get('@Url.Action("GetTraineeRegistrationWindow","TraineeRegistration")', {code:_code})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage); 
+                _window.center();        
+                window_details_Resize()
+                }
+            )
+    }
+
+    function grid_onClick_export(e){
+        e.preventDefault();
+
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        g_trainingCode = dataItem.TrainingCode;
+
+         $.ajax({
+            url: "@Url.Action("ExportExcel", "TraineeRegistration")",
+            type: "POST",
+            data: { paramTrainingCode : dataItem.TrainingCode },
+            success: function(data){
+                debugger
+                var result = data;
+                if(result.FileGuid !== ""){
+                    window.location = '@Url.Action("Download", "TraineeRegistration")?fileGuid=' + result.FileGuid + '&fileName=' + result.FileName;
+                }
+                else{
+                    $mong.kendoAlertInfo("There was an error exporting the file.");
+                }
+            },
+            error: function(data){
+                debugger
+                $mong.kendoAlertInfo("There was an error exporting the file.");
+            }
+        });
+    }//end of function
+    
+    function grid_onExcelExport(e) {
+        var sheet = e.workbook.sheets[0];
+        
+        
+        // Add custom header rows to the exported Excel file
+        sheet.rows.unshift(            
+            {}, // Add an empty row to create separation
+            {}, // Add another empty row
+            {}  // Add one more empty row
+        );
+
+    }
+    
+    function ApplyFilterTraineeList(){
+        return {
+            code : g_trainingCode
+        }
+    }
+
+    
+    function onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+    
+            if (model.RegistrationStatus == "CLOSED") {
+                $(this).find(".btn_action_register").prop("disabled", true);
+                $(this).find(".btn_action_register").addClass("k-state-disabled");
+            }
+        });
+    }
+
+    function grid_traineeList_onDataBound(e) {
+        var grid = this;
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+            
+            $(this).find(".btn_action_cancel").prop("disabled", true);
+            $(this).find(".btn_action_cancel").addClass("k-state-disabled");
+
+            $(this).find(".btn_action_accept").prop("disabled", true);
+            $(this).find(".btn_action_accept").addClass("k-state-disabled");
+            
+            $(this).find(".btn_action_deny").prop("disabled", true);
+            $(this).find(".btn_action_deny").addClass("k-state-disabled");
+
+            if (model.TrainingSchedule.ScheduleStatus == "AVAILABLE" &&
+                (model.TrainingRegistrationStatus == "REGISTERED" ||
+                 model.TrainingRegistrationStatus == "FOR CONFIRMATION" ||
+                 model.TrainingRegistrationStatus == "SCHEDULE FOR CONFIRMATION" ||
+                 model.TrainingRegistrationStatus == "FOR APPROVAL"
+                )
+            ) {
+                $(this).find(".btn_action_cancel").prop("disabled", false);
+                $(this).find(".btn_action_cancel").removeClass("k-state-disabled");
+            }
+
+            if(model.TrainingRegistrationStatus == "SCHEDULE FOR CONFIRMATION"){
+                $(this).find(".btn_action_accept").prop("disabled", false);
+                $(this).find(".btn_action_accept").removeClass("k-state-disabled");
+            }
+
+            if(model.TrainingRegistrationStatus == "SCHEDULE FOR CONFIRMATION"){
+                $(this).find(".btn_action_deny").prop("disabled", false);
+                $(this).find(".btn_action_deny").removeClass("k-state-disabled");
+            }
+
+
+        });
+    }
+
+    async function grid_onClick_accept(e){
+        e.preventDefault();
+        
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Do you want to accept the changes in the schedule of training on behalf of the employee?");
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }
+
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));        
+                
+        g_registrationCode = dataItem.RegistrationCode;
+
+        
+        $.post('@Url.Action("AcceptDenyTrainee","TraineeRegistration")', {paramCode: g_registrationCode, paramReason:null, paramConfirm: "Accept"})
+            .fail(
+                function (res){       
+                    $mong.kendoAlertInfo(res.responseText);
+                    return
+                }   
+            )
+            .done(
+                function(data){                        
+                    
+                    var grid = $("#grid_traineeList").data("kendoGrid");                     
+
+                    grid.dataSource.read().then(function () {
+                        grid.refresh();
+                    });
+                    $mong.kendoAlertInfo("Successfully accepted.");      
+                    return
+                }
+            )
+    }
+
+    function grid_onClick_deny(e){
+        e.preventDefault();
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));   
+        g_registrationCode = dataItem.RegistrationCode;
+        var _window = $("#window_trainingCancellation").data("kendoWindow");
+
+         $.get('@Url.Action("GetTraineeRegistrationDenyConfirmationWindow","TraineeRegistration")')
+         .done(
+            function(_TrainingScheduleDetails){
+                _window.content(_TrainingScheduleDetails);
+                _window.title("TRAINEE REGISTRATION");
+                _window.center().open();
+                window_details_Resize()
+            }
+        )  
+    }//end of function
+    
+    function grid_onClick_cancel(e){
+        e.preventDefault();
+        
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));   
+        g_registrationCode = dataItem.RegistrationCode;
+
+        var _window = $("#window_trainingCancellation").data("kendoWindow");
+
+         $.get('@Url.Action("GetTraineeRegistrationCancellationConfirmationWindow","TraineeRegistration")')
+         .done(
+            function(_TrainingScheduleDetails){
+                _window.content(_TrainingScheduleDetails);
+                _window.title("TRAINING REGISTRATION CANCELLATION");
+                _window.center().open();
+                window_details_Resize()
+            }
+        )  
+    }//end of function
+</script>

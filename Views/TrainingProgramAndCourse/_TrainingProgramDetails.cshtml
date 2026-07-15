@@ -1,0 +1,134 @@
+@model TRS.ViewModels.TrainingProgramAndCourseViewModel
+
+<div class="form-group row" @(Model.FormControl.FormMode == "Edit"? "": "hidden")>
+    <label class="col-sm-4 col-form-label">Program Code:</label>
+    <div class="col-sm-8">
+        <input id="txt_programCode" type="text" class="form-control" placeholder="Program Title" value="@Model.TrainingProgram?.ProgramCode" disabled>
+    </div>
+</div>
+<div class="form-group row">
+    <label for="txt_programTitle" class="col-sm-4 col-form-label">Program Title:</label>
+    <div class="col-sm-8">
+        <input id="txt_programTitle" type="text" class="form-control @Model.FormControl.Required" placeholder="Program Title" 
+         value="@Model.TrainingProgram?.ProgramTitle">
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-sm-4 col-form-label">Job Class:</label>
+    <div class="col-sm-8">
+        @(Html.Kendo().MultiSelect()        
+            .Name("multi_jobClass")
+            .HtmlAttributes(new {@class = Model.FormControl.Required})
+            .AutoClose(false)            
+            .DataValueField("JobClassCode")
+            .DataTextField("JobClassDescription")
+            .Enable(Model.FormControl.AddOnlyEnabled)
+            .BindTo(Model.JobClasses)
+            .Value(Model.TrainingProgram?.JobClasses.Select(w => w.JobClassCode).ToArray())
+            )            
+    </div>
+</div>
+
+<div class="card-footer">
+    <div class="float-right">
+        <button type="submit" class="btn btn-info" onclick="AddEditProgram('@Model.FormControl.FormMode')">@(Model.FormControl.FormMode == "Add" ? "Add" : "Update")</button>
+        <button type="submit" class="btn btn-default" onclick="CloseWindow()">Cancel</button>
+    </div>    
+</div>
+
+
+
+<script>
+    async function AddEditProgram(_control){
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {            
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }                
+
+        var text_programTitle = $("#txt_programTitle").val();
+
+        //check if title exists
+        $.get('@Url.Action("CheckIfProgramTitleExist", "TrainingProgramAndCourse")', { programTitle: text_programTitle })
+            .done(
+                async function (res) {        
+                
+                    if(res.isExist == true)  {                    
+                        const result = await $mong.kendoConfirmationDialog("Program title exists, do you wish to proceed with the " + (_control == "Add"? "new entry": "editing") +" of program?");
+                        //If user clicked NO, proceed below
+                        if (result !== true) {                        
+                            return;//exit
+                        }
+                    }
+
+                    //ask user if want to proceed saving
+                    const result = await $mong.kendoConfirmationDialog("Are you sure you want to save record?");                        
+                    
+                    //If user clicked NO, proceed below
+                    if (result !== true) {                    
+                        return;//exit
+                    }
+
+                    var multi_jobClasses = $("#multi_jobClass").data("kendoMultiSelect").dataItems();
+
+                    var _model = [];
+                    _model.push({
+                        ProgramCode: $("#txt_programCode").val(),
+                        ProgramTitle: text_programTitle,
+                        JobClasses: multi_jobClasses.map(function(dataItem) {
+                                        return {
+                                            JobClassCode: dataItem.JobClassCode,
+                                            JobClassDescription: dataItem.JobClassDescription
+                                        };
+                                    })
+                    })
+
+                    if(_control == "Add")
+                    {
+                        $.post('@Url.Action("AddProgram","TrainingProgramAndCourse")', {model: _model[0]})
+                        .fail(
+                            function (res){       
+                                $mong.kendoAlertInfo(res.responseText);
+                                return
+                            }   
+                        )
+                        .done(
+                            function(data){                        
+                                $("#window_details").data("kendoWindow").close(); 
+                                var grid = $("#grid_trainingProgramList").data("kendoGrid");    
+                                g_programCodeFilter = "" //reset the filter param                    
+                                grid.dataSource.read().then(function () {
+                                    grid.refresh();
+                                });                       
+                                $mong.kendoAlertInfo("Successfully added.");      
+                                return
+                            }
+                        )
+                    }                    
+                    else
+                    {
+                        $.post('@Url.Action("UpdateProgram","TrainingProgramAndCourse")', {model: _model[0]})    
+                        .fail(
+                            function (res){     
+                                $mong.kendoAlertInfo(res.responseText);
+                                return
+                            }
+                        )
+                        .done(
+                            function(data){                        
+                                $("#window_details").data("kendoWindow").close();   
+                                var grid = $("#grid_trainingProgramList").data("kendoGrid");       
+                                g_programCodeFilter = "" //reset the filter param
+                                grid.dataSource.read().then(function () {
+                                    grid.refresh();
+                                });                       
+                                $mong.kendoAlertInfo("Successfully updated.");      
+                                return
+                            }
+                        )
+                    }
+                }//end of .done function
+            )//end of .done
+    }//end of function
+
+</script>

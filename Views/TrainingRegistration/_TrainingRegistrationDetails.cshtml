@@ -1,0 +1,437 @@
+@model TRS.ViewModels.TrainingRegistrationViewModel
+<div class="row">
+    <div class="col-md-12">
+        <div class="form-group row">
+            <label for="txt_programTitle" class="col-sm-2 col-form-label">Program Title:</label>
+            <div class="col-sm-10">
+                @(Html.Kendo().DropDownList()        
+                    .Name("dd_Program")                    
+                    .DataValueField("ProgramCode")
+                    .DataTextField("ProgramTitle")
+                    .Enable(false)            
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.Program?.ProgramCode)
+                    .DataSource(dataSource => dataSource                
+                        .Read(read => read.Action("GetTrainingCourseProgramEnumList", "TrainingSchedule"))
+                        )
+                    .Events(e => e.Change("dd_Program_OnChange")) // Add this line
+                    )       
+            </div>
+        </div>
+    </div>
+    <div  class="col-md-12">
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Course Title:</label>
+            <div class="col-sm-10">
+                @(Html.Kendo().DropDownList()        
+                    .Name("dd_Course")
+                    .DataValueField("CourseCode")
+                    .DataTextField("CourseTitle")         
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.Course?.CourseCode)
+                    .DataSource(dataSource => dataSource   
+                            .Read(read => read.Action("GetTrainingCourseEnumList", "TrainingProgramAndCourse")                            
+                            )
+                        )
+                    .Enable(false)
+                    )     
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12">
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Course Description:</label>
+            <div class="col-sm-10">
+                @(Html.Kendo().TextArea()
+                    .Name("txtCourseDescription")
+                    .Placeholder("Course Description")
+                    .Rows(2)
+                    .Enable(false)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.Course?.CourseDescription)
+                    .HtmlAttributes(new { style = "width: 100%", required = true, data_required_msg = "Course Description"})
+                )
+            </div>
+        </div>
+    </div>
+    <!--LEFT SIDE-->    
+    <div class="col-md-6">        
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Training Code:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().TextBox()
+                    .Enable(false)
+                    .Name("txt_TrainingCode")
+                    .Placeholder("System-generated")
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.TrainingCode)
+                )
+            </div>
+        </div>        
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Region:</label>
+            <div class="col-sm-8">
+                
+                @(Html.Kendo().DropDownList()        
+                    .Name("dd_Region")
+                    .DataValueField("Region")
+                    .DataTextField("Region")
+                    .Enable(false)            
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.Region)
+                    .DataSource(dataSource => dataSource                
+                        .Read(read => read.Action("GetHRRegionList", "TrainingSchedule"))
+                        )            
+                    )  
+            </div>            
+        </div>         
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Training Type:</label>
+            <div class="col-sm-8">
+                
+                @(Html.Kendo().DropDownList()        
+                    .Name("dd_TrainingType")
+                    .Enable(false)            
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.TrainingType)
+                    .BindTo(
+                        new List<string>(){
+                            "",
+                            "FACE TO FACE",
+                            "ONLINE"
+                            }
+                    )       
+                    )  
+            </div>            
+        </div>        
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Date:</label>
+            <div class="col-sm-4">
+                @(Html.Kendo().DatePicker()
+                    .Name("dtp_StartDate")
+                    .Enable(false)
+                    .Events(e => e.Change("dtp_StartDate_OnChange"))
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.StartDate.ToShortDateString())                    
+                )
+            </div>
+            <div class="col-sm-4">
+                @(Html.Kendo().DatePicker()
+                    .Name("dtp_EndDate")
+                    .Enable(false)
+                    .Events(e => e.Change("dtp_EndDate_OnChange"))
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.EndDate)
+                )
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Time:</label>
+            <div class="col-sm-4">                
+                @(Html.Kendo().TimePicker()
+                    .Name("tp_StartTime")
+                    .Interval(30)
+                    .Enable(false)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.StartTime)
+                    .Events(e => e.Change("tp_StartTime_OnChange"))                                        
+                )
+            </div>
+            <div class="col-sm-4">                
+                @(Html.Kendo().TimePicker()
+                    .Name("tp_EndTime")
+                    .Interval(30)
+                    .Enable(false)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.EndTime)
+                    .Events(e => e.Change("tp_EndTime_OnChange"))                    
+                )
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Resource Speaker:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().TextBox()
+                    .Name("txt_ResourceSpeaker")
+                    .Enable(false)
+                    .Placeholder("Last Name, First Name, Middle Name")
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.ResourceSpeaker)
+                )
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Class Size:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().NumericTextBox()
+                    .Name("txt_ClassSize")
+                    .Min(1)        
+                    .Decimals(0) // allow only whole numbers                     
+                    .Format("n0") // hide decimal point   
+                    .Spinners(false) // remove up and down step arrows
+                    .Enable(false)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.ClassSize)
+                )
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Minimum Participants:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().NumericTextBox()
+                    .Name("txt_MinParticipants")
+                    .Min(1)        
+                    .Decimals(0) // allow only whole numbers                     
+                    .Format("n0") // hide decimal point   
+                    .Spinners(false) // remove up and down step arrows
+                    .Enable(false)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.MinimumParticipants)
+                )
+            </div>
+        </div>
+        
+    </div>
+
+    <!--RIGHT SIDE-->
+    <div class="col-md-6">              
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Cost Per Head:</label>
+            <div class="col-sm-8">
+                @* <input type="number" id="txt_CostPerHead" min="1" onkeyup="if(this.value<0){this.value= this.value * -1}" class="form-control" value='@(Model.TrainingRegistrationDetails.TrainingSchedule == null? "":Model.TrainingRegistrationDetails.TrainingSchedule?.CostPerHead)' @Model.FormControl.PropDisabled> *@
+                @(Html.Kendo().NumericTextBox()
+                    .Name("txt_CostPerHead")
+                    .Min(1)                            
+                    .Format("n2") // hide decimal point   
+                    .Spinners(false) // remove up and down step arrows
+                    .Enable(false)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.CostPerHead)
+                )
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Venue:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().TextBox()
+                    .Name("txt_Venue")
+                    .Enable(false)                   
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.Venue)
+                )
+            </div>
+        </div>  
+        
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Job Class:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().MultiSelect()
+                    .Name("multi_jobClass")
+                    .DataValueField("JobClassCode")
+                    .DataTextField("JobClassDescription")
+                    .Enable(false)
+                    .AutoBind(true) // prevent initial binding
+                    .BindTo(Model.JobClasses)
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule == null ? null: Model.TrainingRegistrationDetails.TrainingSchedule?.Program?.JobClasses?.Select(w => w.JobClassCode).ToArray())
+                    )        
+            </div>
+        </div>
+        
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Additional Job Class:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().MultiSelect()
+                .Name("multi_addJobClass")
+                .AutoClose(false)
+                .DataValueField("JobClassCode")
+                .DataTextField("JobClassDescription")                    
+                .Enable(false)
+                .AutoBind(true) // prevent initial binding
+                .BindTo(Model.JobClasses)
+                .Value(Model.TrainingRegistrationDetails.TrainingSchedule == null ? null: Model.TrainingRegistrationDetails.TrainingSchedule?.AdditionalJobClasses?.Select(w => w.JobClassCode).ToArray())
+                )       
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Registration Status:</label>
+            <div class="col-sm-8">            
+                @(Html.Kendo().TextBox()
+                    .Enable(false)
+                    .Name("txt_RegistrationStatus")
+                    .Placeholder("System-generated")
+                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.RegistrationStatus)
+                )
+            </div>
+        </div>   
+        
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Training Registration Status:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().TextBox()
+                    .Name("txt_TrainingRegistrationStatus")
+                    .Enable(false)                   
+                    .Value(Model.TrainingRegistrationDetails.TrainingRegistrationStatus)
+                )
+            </div>
+        </div>
+        @{
+            if(Model.FormControl.Text == "Open"){
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label">Reason For Cancellation:</label>
+                    <div class="col-sm-8">
+                        @(Html.Kendo().TextArea()
+                            .Name("txt_ReasonForCancellation")
+                            .Enable(false)            
+                            .Rows(2)  
+                            .HtmlAttributes(new {@class = "required-field"})
+                            .Value(Model.TrainingRegistrationDetails.ReasonForCancellation)
+                        )
+                    </div>
+                </div>   
+            }
+        }        
+    </div>    
+</div>
+
+
+
+@{
+    if(Model.FormControl.Text == "Cancel") 
+    {
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-outline card-danger">
+                    <div class="card-header">
+                        <h3 class="card-title">TRAINING REGISTRATION CANCELLATION</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">                    
+                        <div class="form-group row">
+                            <label class="col-sm-2 col-form-label">Reason For Cancellation:</label>
+                            <div class="col-sm-10">
+                                @(Html.Kendo().TextArea()
+                                    .Name("txt_ReasonForCancellation")
+                                    .Enable(true)            
+                                    .Placeholder("Reason For Cancellation")
+                                    .Rows(4)  
+                                    .HtmlAttributes(new {@class = "required-field"})
+                                    .Value(Model.TrainingRegistrationDetails.TrainingSchedule?.TrainingRegistration?.First().ReasonForCancellation)
+                                )
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>            
+        </div>
+        
+        <div class="card-footer">
+
+            <div class="float-right">
+                <button type="submit" class="btn btn-default" onclick="CloseWindow()">Close</button>
+                <button type="submit" class="btn btn-info" onclick="ConfirmCancellation()">Confirm Cancellation</button>
+            </div>
+        </div>
+    }
+    else if(Model.FormControl.Text == "Confirm") {
+        <div class="card-footer">
+
+            <div class="float-right">
+                <button type="submit" class="btn btn-default" onclick="CloseWindow()">Close</button>
+                <button type="submit" class="btn btn-danger" onclick="Deny()">Deny</button>
+                <button type="submit" class="btn btn-success" onclick="Accept()">Accept</button>                
+            </div>
+        </div>
+    }else if(Model.FormControl.Text == "Open"){
+        <div class="card-footer">
+            <button type="submit" class="btn btn-default float-right" onclick="CloseWindow()">Close</button>
+        </div>
+    }
+}
+
+
+    
+
+<script>
+
+    function Deny(){
+        var _window = $("#window_trainingCancellation").data("kendoWindow");
+
+         $.get('@Url.Action("GetTrainingRegistrationConfirmationWindow","TrainingRegistration")')
+         .done(
+            function(_TrainingScheduleDetails){
+                _window.content(_TrainingScheduleDetails);
+                _window.center().open();
+            }
+        )  
+    }
+
+    async function Accept(){
+        
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Do you want to accept the changes in the schedule of your registered training?");
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }
+
+        
+        $.post('@Url.Action("ConfirmRegistration","TrainingRegistration")', {paramCode: g_registrationCode, paramReason:null, paramConfirm: "Accept"})
+        .fail(
+            function (res){       
+                $mong.kendoAlertInfo(res.responseText);
+                return
+            }   
+        )
+        .done(
+            function(data){                        
+                $("#window_details").data("kendoWindow").close(); 
+                var grid = $("#grid_trainingRegistrationList").data("kendoGrid"); 
+                
+                var scheduler = $("#scheduler_trainingSchedule").data("kendoScheduler");
+                scheduler.refresh();
+                scheduler.dataSource.read();
+
+                grid.dataSource.read().then(function () {
+                    grid.refresh();
+                });
+                $mong.kendoAlertInfo("Successfully registered.");      
+                return
+            }
+        )
+    }//end of function
+
+
+    async function ConfirmCancellation(){
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields() > 0) {            
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }
+        
+
+        //ask user if want to proceed saving
+        const result = await $mong.kendoConfirmationDialog("Do you want to cancel your training registration?");
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }
+
+
+        var _reason = $("#txt_ReasonForCancellation").val();
+        $.post('@Url.Action("ConfirmCancellation","TrainingRegistration")', {paramCode: g_registrationCode, paramReason: _reason})
+        .fail(
+            function (res){       
+                $mong.kendoAlertInfo(res.responseText);
+                return
+            }   
+        )
+        .done(
+            function(data){                        
+                $("#window_details").data("kendoWindow").close(); 
+                var grid = $("#grid_trainingRegistrationList").data("kendoGrid"); 
+                
+                var scheduler = $("#scheduler_trainingSchedule").data("kendoScheduler");
+                scheduler.refresh();
+                scheduler.dataSource.read();
+
+                grid.dataSource.read().then(function () {
+                    grid.refresh();
+                });
+                $mong.kendoAlertInfo("Successfully cancelled.");      
+                return
+            }
+        )
+    }//end of function
+
+</script>

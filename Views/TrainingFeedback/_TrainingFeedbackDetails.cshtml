@@ -1,0 +1,260 @@
+@model TRS.ViewModels.TrainingFeedbackViewModel
+@{
+    var isEnabled = (Model.TrainingRegistrationDetails.TrainingFeedbackStatus == "COMPLETE" || Model.TrainingRegistrationDetails.Attendance == "ABSENT" ? "disabled" : "enabled");
+}
+<style>
+    .answer-radio {
+        width: 20px;
+        height: 20px;
+        transform: scale(1.5);
+        margin: 5px;
+        cursor: pointer;
+    }
+
+    /* Additional styling to ensure proper spacing */
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+<div class="row">        
+    <div style="background-color: #262626; color:rgba(255, 255, 255, 0.863); padding: 1.5em;">
+    <div style="display: flex;align-items: center; margin-left: -1em;">
+        <img aria-hidden="true" alt="HR Icon" src="~/dist/img/hr_logo_gold.png" width="100px">
+        <h1 style="color: orange; font-weight: 600!important; font-size: 2.5em;">TRAINING FEEDBACK</h1>
+    </div>
+    <p><h6>Hi <span id="employeeInfo" data-id="@Model.TrainingRegistrationDetails.EmployeeNo" style="color: #4472C4;">@Model.TrainingRegistrationDetails.EmployeeInfo.EmployeeName</span>, we value your input and strive to continuously improve our training program.</h6></p>
+    <p>
+        As part of our training analysis, we are conducting a training feedback form to determine this training's effectiveness. In this regard, we urge you to complete this form as honestly as possible.
+        Your sincere and constructive feedback will help us assess the relevance of this program and develop future courses customized for our company's needs.
+    </p>
+    <p>If you have any questions or encounter any issues, please don’t hesitate to contact our team for assistance (R1: 0917-818-6770 | R2: 0917-818-6753).</p>
+    <p>The survey will take approximately 10 minutes to complete, and your responses will remain confidential.</p>
+    <br>
+    Your partner in talent development,
+    <br>
+    <img aria-hidden="true" alt="TOD Icon" src="~/dist/img/hr_logo_tod.png" width="100px">
+        <div>
+            <h6>TRAINING & ORGANIZATIONAL DEVELOPMENT</h6>
+            <h6><i>Human Resources Management</i></h6>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin-top: 1%;">
+    <div class="col-lg-4">     
+        <div class="form-group row">
+            <label class="col-sm-3 col-form-label">PROGRAM TITLE:</label>
+            <div class="col-lg-9">             
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.Program?.ProgramTitle" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row"> 
+            <label class="col-sm-3 col-form-label">TRAINING TYPE:</label>           
+            <div class="col-lg-9">                       
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.TrainingType" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-3 col-form-label">REGION:</label>
+            <div class="col-lg-9">                       
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.Region" readonly>                 
+            </div>
+        </div>              
+    </div>
+    <div class="col-lg-4">     
+        <div class="form-group row">
+            <label class="col-sm-3 col-form-label">COURSE TITLE:</label>
+            <div class="col-lg-9">             
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.Course.CourseTitle" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row"> 
+            <label class="col-sm-3 col-form-label">TRAINING DATE:</label>           
+            <div class="col-lg-9">                       
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.StartDate.ToShortDateString() - @Model.TrainingRegistrationDetails.TrainingSchedule?.EndDate.ToShortDateString()" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-3 col-form-label">RESOURCE SPEAKER:</label>
+            <div class="col-lg-9">                       
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.ResourceSpeaker" readonly>                 
+            </div>
+        </div>              
+    </div>
+    <div class="col-lg-4">     
+        <div class="form-group row">
+            <label class="col-sm-3 col-form-label">TRAINING CODE:</label>
+            <div class="col-lg-9">             
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.TrainingCode" readonly>                 
+            </div>            
+        </div>              
+        <div class="form-group row"> 
+            <label class="col-sm-3 col-form-label">TRAINING TIME:</label>           
+            <div class="col-lg-9">                       
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.StartTime - @Model.TrainingRegistrationDetails.TrainingSchedule?.EndTime" readonly>                 
+            </div>
+        </div>              
+        <div class="form-group row">
+            <label class="col-sm-3 col-form-label">VENUE:</label>
+            <div class="col-lg-9">                       
+                <input class="form-control" type="text" value="@Model.TrainingRegistrationDetails.TrainingSchedule?.Venue" readonly>                 
+            </div>
+        </div>              
+    </div>   
+</div>
+
+<div class="row"style="margin-top: 1%;">
+    <div class="col-lg-12">
+        <h4 style="font-weight: 600!important;">Share us your thoughts. How was your training experience?</h4>    
+        <p>Please complete this survey below using the following scale to rate your degree of agreement in the identified facets of training.</p>
+    </div>    
+    <div class="col-lg-12"></div>
+    
+    <table class="table table-striped">
+        <tbody>
+            <tr>
+                <td></td>
+                <td align="center"><b>Strongly Disagree</b></td>
+                <td align="center"><b>Disagree</b></td>
+                <td align="center"><b>Agree</b></td>
+                <td align="center"><b>Strongly Agree</b></td>
+                <td align="center"><b>NA</b></td>
+            </tr>
+            @foreach(var category in Model.TrainingFeedbackQuestions.Where(w=>w.Category != "Comments").OrderBy(s=>s.CategorySequence).GroupBy(s=>s.Category)){
+                <tr>
+                    <td colspan="6"><b>@category.Key <span style="color:red;">*</span></b></td>
+                </tr>    
+                @foreach(var item in Model.TrainingFeedbackQuestions.Where(w => w.Category == category.Key).OrderBy(s=>s.QuestionSequence)){                    
+                    if(item.QuestionType == "RATING"){
+                        var stronglyDisagreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "1").FirstOrDefault() ==null? "":"checked");
+                        var disagreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "2").FirstOrDefault() ==null? "":"checked");
+                        var agreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "3").FirstOrDefault() ==null? "":"checked");
+                        var stronglyAgreeIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "4").FirstOrDefault() ==null? "":"checked");
+                        var naIsChecked = (Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID ==item.QuestionID && w.Answer == "0").FirstOrDefault() ==null? "":"checked");
+                        
+                        <tr>
+                            <td>@item.QuestionSequence.) @item.Question.ToString()</td>
+                            <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="1" @stronglyDisagreeIsChecked /></td>
+                            <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="2" @disagreeIsChecked /></td>
+                            <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="3" @agreeIsChecked /></td>
+                            <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="4" @stronglyAgreeIsChecked /></td>
+                            <td align="center"><input @isEnabled data-question-id="@item.QuestionID.ToString()" class="answer-radio @(item.IsRequired == true ? "required-field" : "")" type="radio" name="@item.QuestionID.ToString()" value="0" @naIsChecked /></td>
+                        </tr>
+                    }                    
+                }
+            }
+        </tbody>
+    </table>
+    </div>
+     
+</div>
+
+<div class="row"style="margin-top: 1%;">
+    <div class="col-lg-12">
+        <h4 style="font-weight: 600!important;">Share your insights!</h4>    
+        <p>Take your time to review the questions in this section. This will allow us to better understand your experience and training needs.</p>
+        <p>We encourage you to provide specific details and suggestions to help us better serve our participants in the future.</p>
+    </div>    
+    <div class="col-lg-12">
+        @foreach(var category in Model.TrainingFeedbackQuestions.Where(w => w.Category == "Comments").OrderBy(s=>s.CategorySequence).GroupBy(s=>s.Category)){   
+            @foreach (var item in Model.TrainingFeedbackQuestions.Where(w => w.Category == category.Key).OrderBy(s => s.QuestionSequence))
+            {
+                <div class="col-lg-12">
+                    <div class="form-group">
+                        <label>@item.QuestionSequence.) @item.Question.ToString()
+                            @if(item.IsRequired){
+                                <span style="color:red;">*</span>
+                            }
+                        </label>
+                        <textarea @isEnabled name="@item.QuestionID.ToString()" data-question-id="@item.QuestionID.ToString()" class="answer-textarea form-control @(item.IsRequired == true ? "required-field" : "")" rows="2" id="@item.Question.ToString()">@Model.TrainingFeedbackList.Where(w => w.TrainingFeedbackQuestions.QuestionID == item.QuestionID).FirstOrDefault()?.Answer</textarea>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+
+<div class="card-footer">  
+    <button @isEnabled type="submit" id="btnSubmit" class="btn btn-default float-right" onclick="Submit()">Submit</button>
+</div>
+
+<script>
+    $(function () {
+        if ('@Model.TrainingRegistrationDetails.TrainingFeedbackStatus' === 'COMPLETED') {
+            $.each($('input'), function (index, item) {
+                $(item).prop("disabled", "disabled")
+            });
+            $.each($('textarea'), function (index, item) {
+                $(item).prop("disabled", "disabled")
+            });
+
+            $("#btnSubmit").prop("disabled", "disabled");
+        }
+
+    });
+
+    async function Submit(){
+        
+        //check if all required fields are filled out 
+        if ($mong.ValidateRequiredFields("required-field") > 0) {            
+            $mong.kendoAlertInfo("Please fill up all required fields.")
+            return
+        }
+
+        
+        //ask user
+        const result = await $mong.kendoConfirmationDialog("Do you want to submit your answers for the Training Evaluation?");
+        
+        //If user clicked NO, proceed below
+        if (result !== true) {                    
+            return;//exit
+        }    
+        
+        $("#btnSubmit").prop("disabled", "disabled");
+
+        var _model = [];
+        var employeeNo = $("#employeeInfo")[0].dataset.id;
+
+        $.each($('.answer-radio:checked'), function (index, item) {
+            var rowValue = {
+                Answer: $(item).val(),
+                EmployeeNo : employeeNo,
+                TrainingFeedbackQuestions: {"QuestionID":$(item).data('question-id')},
+            };
+            _model.push(rowValue)
+        })
+
+        $.each($('.answer-textarea'), function (index, item) {
+            var rowValue = {
+                Answer: $(item).val(),
+                EmployeeNo : employeeNo,
+                TrainingFeedbackQuestions: {"QuestionID":$(item).data('question-id')},
+            };
+            _model.push(rowValue)
+        })       
+        
+        $.post('@Url.Action("SubmitFeedback","TrainingFeedback")', {model: _model, paramRegistrationCode: g_registrationCode, paramEmployeeno: employeeNo})
+            .fail(
+                function (res){       
+                    $mong.kendoAlertInfo(res.responseText);
+                    return
+                }   
+            )
+            .done(
+                function(data){                        
+                    $mong.kendoAlertInfo("Successfully submitted.");     
+                    $.each($('input'), function (index, item) {
+                        $(item).prop("disabled","disabled")
+                    })
+                    $.each($('textarea'), function (index, item) {
+                        $(item).prop("disabled","disabled")
+                    })
+
+                    return
+                }
+            )
+                    
+    }
+
+</script>

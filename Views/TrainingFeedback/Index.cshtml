@@ -1,0 +1,277 @@
+﻿@model TRS.ViewModels.TrainingFeedbackViewModel
+@{
+    ViewData["Title"] = "Training Evaluation";    
+    ViewBag.FormID = "TRTT-0005";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+
+<style>
+    .TrainingFeedbackStatus_Clickable {
+        color: rgb(0, 145, 255) !important;
+        cursor: pointer;
+    }
+</style>
+
+
+@(Html.Kendo().Window()
+    .Name("window_feedbackdetails")
+    .Title("TRAINING FEEDBACK")    
+    .Draggable()
+    .Pinned(true)    
+    .Modal()
+    .Visible(false)
+    .Content(@<text>        
+    </text>)
+    .Width("97%")
+    .Height("97%")
+    .Actions(actions => actions.Close())
+)
+
+<div class="card card-secondary">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-calendar"></i>
+            Training Feeback
+        </h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @(Html.Kendo().Grid(Model.TrainingRegistrationList)
+        .Name("grid_trainingRegistrationList")
+        .HtmlAttributes(new {data_form = "Registree" })
+        .NoRecords()
+        .Height(500)
+        .Columns(columns =>
+        {
+            columns.Bound(m => m.TrainingSchedule.Program.ProgramTitle).Title("PROGRAM").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })           
+            .Width(180);
+            columns.Bound(m => m.TrainingSchedule.Course.CourseTitle).Title("COURSE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+            .Width(280);             
+            columns.Bound(m => m.TrainingSchedule.TrainingCode).Title("TRAINING CODE").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+            .Width(280);             
+            columns.Bound(m => m.EmployeeInfo.EmployeeName).Title("EMPLOYEE NAME").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+            .Width(280);             
+            columns.Bound(m => m.TrainingCompletionStatus).Title("TRAINING COMPLETION STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+            .Width(280);             
+            columns.Bound(m => m.EmployeeInfo.PersonalPhoneNo).Title("CONTACT NO.").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })            
+            .Width(280);             
+            columns.Bound(m => m.EmployeeInfo.EmailAddress).Title("EMAIL ADDRESS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })                        
+            .Width(280);             
+            columns.Bound(m => m.TrainingFeedbackStatus).Title("TRAINING FEEDBACK STATUS").HeaderHtmlAttributes(new { style = "text-align:center; font-weight:bold;" })
+            .ClientTemplate("<a class='TrainingFeedbackStatus_Clickable' href=\\# onclick=OpenFeedbackPage('#= RegistrationCode #','#= TrainingFeedbackStatus #');>#= TrainingFeedbackStatus == null? 'INCOMPLETE':  TrainingFeedbackStatus #</a>")
+            .Width(280).Sticky();             
+        }).ToolBar(toolbar => {
+            toolbar.ClientTemplate("<div id='custom-toolbar-placeholder'></div>");
+        }
+        )
+        .Editable(editable => editable
+        .Mode(GridEditMode.PopUp))
+        .Excel(excel => excel
+            .FileName("TrainingFeedback.xlsx") // Specify the filename for the exported Excel file
+            .AllPages(true) // Enable export of all pages, including content before the grid
+            .Filterable(false)
+        )
+        .Events(events => events
+            .ExcelExport("grid_onExcelExport")
+            .DataBound("grid_onDataBound")        
+        ) // Attach the excelExport event
+        .Scrollable(s => s.Height("auto"))
+        .Pageable()
+        .DataSource(dataSource => dataSource
+            .Ajax()
+            .PageSize(20)
+            .ServerOperation(true)
+            .Read(read => read.Action("GetTrainingRegistrationList", "TrainingFeedback").Data("ApplyFilterGrid"))
+            .Model(model =>
+            {
+                model.Id(p => p.RegistrationCode);
+            })
+        )
+        .Resizable(resize => resize.Columns(true))
+        )        
+    </div>
+</div>
+
+
+<script>    
+    var g_paramEmployeeNo = "",
+        g_registrationCode = "",
+        g_trainingCode = "";
+     
+     var g_programCodeFilter = "", 
+        g_courseCodeFilter = "",
+        g_regionCodeFilter = "",
+        g_trainingTypeFilter = "",
+        g_trainingCodeFilter = "";
+
+    $(document).ready(function () {
+        var customToolbarPlaceholder = $("#custom-toolbar-placeholder");
+
+        var filtersContainer = $("<div style='display:flex;flex:auto;align-items: center;margin-left:10px;margin-right: auto; padding: 10px;'>Filters: </div>").prependTo(customToolbarPlaceholder);
+
+        var programFilter = $("<div style='margin-right:10px;margin-left:10px;width:200px;'></div>").appendTo(filtersContainer);
+        var courseFilter = $("<div style='margin-right:10px;width:200px;'></div>").appendTo(filtersContainer);
+        var regionFilter = $("<div style='margin-right:10px;width:150px;'></div>").appendTo(filtersContainer);
+        var trainingTypeFilter = $("<div style='margin-right:10px;width:150px;'></div>").appendTo(filtersContainer);
+        var trainingCodeFilter = $("<div style='margin-right:10px;width:150px;'></div>").appendTo(filtersContainer);
+        var ApplyFiltersButton = $("<button class='k-button k-button-solid-primary k-button-md k-rounded-md k-button-solid k-button-solid-base k-toolbar-button'>Apply Filters</button>").appendTo(filtersContainer);
+
+        programFilter.kendoDropDownList({
+            dataTextField: "ProgramTitle",
+            dataValueField: "ProgramCode",  
+            width: 500,
+			optionLabel: 'PROGRAM',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingProgramEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        courseFilter.kendoDropDownList({
+            dataTextField: "CourseTitle",
+            dataValueField: "CourseCode",
+            width: 500,
+			optionLabel: 'COURSE',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingCourseEnumList","TrainingProgramAndCourse"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        //TODO REGION
+        regionFilter.kendoDropDownList({
+            dataTextField: "Region",
+            dataValueField: "Region",
+            width: 300,
+			optionLabel: 'REGION',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetHRRegionList","TrainingSchedule"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        trainingTypeFilter.kendoDropDownList({
+            dataTextField: "text",
+            dataValueField: "value",
+            width: 300,
+			optionLabel: 'TRAINING TYPE',         
+            dataSource: [
+                { text: "", value: "" },
+                { text: "FACE TO FACE", value: "FACE TO FACE" },
+                { text: "ONLINE", value: "ONLINE" }
+            ]
+        });
+
+        
+        //TODO REGION
+        trainingCodeFilter.kendoDropDownList({
+            dataTextField: "TrainingCode",
+            dataValueField: "TrainingCode",
+            width: 500,
+			optionLabel: 'TRAINING CODE',            
+            dataSource: {
+                transport: {
+                    read: {
+                        url: '@(Url.Action("GetTrainingCodeList","TrainingFeedback"))',
+                        dataType: "json"
+                    }
+                }
+            }
+        });
+
+        ApplyFiltersButton.click(function () {
+            // apply the filters to the grid
+            g_courseCodeFilter = courseFilter.data("kendoDropDownList").value();
+            g_programCodeFilter = programFilter.data("kendoDropDownList").value();
+            g_regionCodeFilter = regionFilter.data("kendoDropDownList").value();
+            g_trainingTypeFilter = trainingTypeFilter.data("kendoDropDownList").value();
+            g_trainingCodeFilter = trainingCodeFilter.data("kendoDropDownList").value();
+          
+            var grid = $("#grid_trainingRegistrationList").data("kendoGrid");
+            grid.dataSource.read();
+        });
+    });
+
+    function ApplyFilterGrid(){
+        return {            
+            paramProgramCode : g_programCodeFilter,
+            paramCourseCode : g_courseCodeFilter,
+            paramRegionCode : g_regionCodeFilter,
+            paramTrainingType : g_trainingTypeFilter,
+            paramTrainingCode : g_trainingCodeFilter
+        }
+    }
+
+    function OpenFeedbackPage(registrationCode,feedbackStatus){
+        g_registrationCode = registrationCode
+        
+        var _url = '@Url.Action("GetTrainingFeedbackDetails","TrainingFeedback")';        
+
+        var _window = $("#window_feedbackdetails").data("kendoWindow");
+                        
+        _window.open();
+        
+        //add spinner
+        kendo.ui.progress(_window.element, true);
+        
+        //get the partial page and place it in window content
+        $.get(_url, {control:"Open", code:registrationCode})
+            .fail(
+                function(res){                    
+                    $mong.kendoAlertInfo(res.responseText);  
+                }
+            )
+            .done(
+                function(_partialPage){ //pages: _TrainingProgramDetails | _TrainingCourseDetails
+                _window.content(_partialPage);       
+                _window.center();    
+                window_details_Resize()
+                }
+            )
+    }
+
+    function grid_onDataBound(e) {
+        var grid = this;
+    
+        grid.tbody.find("tr[role='row']").each(function () {
+            var model = grid.dataItem(this);
+            if(model.TrainingFeedbackStatus == "COMPLETED"){
+                $(".TrainingFeedbackStatus_Clickable").addClass('disabled');
+                $(".TrainingFeedbackStatus_Clickable").removeAttr("onclick");    
+            }
+        });
+    }
+    
+    
+    function grid_onExcelExport(e) {
+        var sheet = e.workbook.sheets[0];
+        
+        
+        // Add custom header rows to the exported Excel file
+        sheet.rows.unshift(            
+            {}, // Add an empty row to create separation
+            {}, // Add another empty row
+            {}  // Add one more empty row
+        );
+
+    }
+    
+</script>

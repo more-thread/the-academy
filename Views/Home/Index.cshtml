@@ -1,0 +1,86 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    ViewBag.FormID = "TRHH-0001";
+}
+@* Make sure tag helpers are not available for the Window content *@
+@removeTagHelper "*, Microsoft.AspNet.Mvc.Razor"
+@removeTagHelper "*, Microsoft.AspNetCore.Mvc.Razor"
+
+
+<div class="card">
+    <div class="card-header" >
+        <h3 class="card-title">
+            <i class="fas fa-calendar"></i>
+            Training Calendar
+        </h3>
+    </div>
+    <div class="card-body">
+        @(Html.Kendo().Scheduler<CalendarActivity>()
+            .Name("scheduler_trainingSchedule")
+            .Date(DateTime.Now)
+            .Editable(false)
+            .ShowWorkHours(true)
+            .WorkDayStart(8, 0, 0)                        
+            .WorkDayEnd(17, 0, 0)
+            .Selectable(true)                                    
+            .Events(e => e.Change("scheduler_change"))            
+            .Resources(resource =>
+            {
+                resource.Add(m => m.TrainingScheduleStatus)
+                .Title("Status")
+                .DataTextField("Text")
+                .DataValueField("Value")
+                .DataColorField("Color")
+                .BindTo(new[] {
+                    new { Text = "DRAFT", Value = "DRAFT", Color = "#007bff" },
+                    new { Text = "AVAILABLE", Value = "AVAILABLE", Color = "#28a745" },
+                    new { Text = "COMPLETED", Value = "COMPLETED", Color = "#6c757d" }
+                });
+            })
+            .Views(views =>
+            {
+                views.DayView(wView =>
+                {
+                    wView.WorkDayStart( 8, 0, 0);
+                    wView.WorkDayEnd(17, 0, 0);
+                    wView.ShowWorkHours(true);
+                    wView.Footer(true);
+                });
+                views.WeekView(wView =>
+                {
+                    wView.WorkDayStart(8, 0, 0);
+                    wView.WorkDayEnd(17, 0, 0);
+                    wView.ShowWorkHours(true);
+                    wView.Footer(true);
+                });
+                views.MonthView(mView => mView.Selected(true));
+            })
+            .DataSource(d => d
+            .Read("GetTrainingScheduleActivity", "TrainingSchedule")
+            )
+            )
+    </div>
+</div>
+
+<script>
+    function onClose() {           
+    }
+    
+    function scheduler_change(e) {     
+        var events = e.events; //list of selected Scheduler events
+        
+        if(events.length == 0){
+            return;
+        }       
+        $.get('@Url.Action("GetTrainingScheduleWindow","TrainingSchedule")',{control: "View",code : events[0].ID}).done(
+            function(_TrainingScheduleDetails){
+                $("#window_details").data("kendoWindow").content(_TrainingScheduleDetails);
+                $("#window_details").data("kendoWindow").center().open();
+                $("#window_details").data("kendoWindow").title(events[0].Schedule.TrainingCode);
+                window_details_Resize()
+            }
+        )
+    }
+    
+    
+</script>

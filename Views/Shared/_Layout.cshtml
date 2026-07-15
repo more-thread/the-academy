@@ -1,0 +1,471 @@
+﻿@{
+    var darkmode = Context.Request.Cookies["darkmode"]?? "no";
+    var theme = Context.Request.Cookies["theme"];
+}
+
+@using Kendo.Mvc.UI
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Registrar | @ViewBag.Title</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Tempusdominus Bootstrap 4 -->
+    <link rel="stylesheet" href="~/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+    <!-- iCheck -->
+    <link rel="stylesheet" href="~/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <!-- JQVMap -->
+    <link rel="stylesheet" href="~/plugins/jqvmap/jqvmap.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="~/dist/css/adminlte.min.css">
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="~/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
+    <!-- Daterange picker -->
+    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
+    <!-- summernote -->
+    <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    @*<link rel="stylesheet" href="~/kendo/css/bootstrap-urban.css" />*@
+    
+
+    @{
+        var selectedTheme = "default-main";
+
+
+        <link href="~/kendo/css/@(selectedTheme).css" rel="stylesheet" type="text/css" />
+    }
+
+    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <script src="~/kendo/js/kendo.all.min.js"></script>
+    <script src="~/kendo/js/kendo.aspnetmvc.min.js"></script>
+    <script src="~/kendo/js/jszip.min.js"></script>
+    <script src="~/kendo/kendo-ui-license.js"></script>
+        <style>
+            .k-input-values .k-chip-list {
+                display: inline-grid !important;
+                width: 100% !important
+            }
+            .k-list-optionlabel{display: none;}
+
+            .k-window-titlebar{
+                background-color: #343a40;                
+                color: white;
+            }
+
+            .k-command-cell > .k-button{                
+                background-color: #f4a434 !important;
+                border-color: #f4a434 !important;
+                color: white !important;
+            }
+
+            .card-footer .btn {
+                background-color: #f4a434 !important;
+                border-color: #f4a434 !important;
+                color: white !important;
+            }
+
+            #custom-toolbar-placeholder .k-button-solid-primary {
+                background-color: #f4a434 !important;
+                border-color: #f4a434 !important;
+                color: white !important;
+            }
+
+        </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed @(darkmode == "yes" ? "dark-mode" : "")">
+    <div class="wrapper">
+
+        <!-- Preloader -->
+        <div class="preloader flex-column justify-content-center align-items-center" >
+            <img class="animation__shake" src="~/dist/img/hr_logo_gold.png" alt="TRSLogo" height="60" width="60" style="background-color:#343a40; border-radius:1.5em;">
+            
+        </div>
+
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="#" class="nav-link">Home</a>
+                </li>
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <!-- Navbar Search -->
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="navbar-search" href="#" role="button">
+                        <i class="fas fa-search"></i>
+                    </a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false" id="btnuser">
+                        <i class="k-icon k-i-user" style="margin-top: -3px; margin-right: 4px"></i>
+                            Account                 
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" style="left: inherit; right: 0px;">
+                        <div class="dropdown-item dropdown-header">
+                            <user-info></user-info>
+                        </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" id="btnAbout" class="dropdown-item" style="text-align:center;">
+                        <i class="k-icon k-i-info mr-2"></i> About         
+                    </a>
+                    <br />       
+                    </div>         
+                     
+                  </li> 
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+        <!-- Main Sidebar Container -->
+        <aside id="asideMenu"
+            class="main-sidebar @(darkmode == "no" ? "sidebar-dark-warning" : "sidebar-light-warning") elevation-4">
+            <!-- Brand Logo -->
+            <a href="@Url.Action("Index", "Home")" class="brand-link">
+                <img src="~/dist/img/hr_logo_gold.png" alt="TRS Logo" class="brand-image img-circle elevation-3"
+                    style="opacity: .8">
+                <span style="color:orange;" class="brand-text font-weight-light"><b>TRS</b></span>
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+               
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <navigation-menu></navigation-menu>
+                </nav>
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0">@ViewBag.Title</h1>
+                        </div><!-- /.col -->
+                        <div class="col-sm-6">
+                            <ol class="breadcrumb float-sm-right">
+                                @* <li class="breadcrumb-item"><a href="#">Home</a></li> *@
+                                @*<li class="breadcrumb-item active">@ViewBag.Title</li>*@
+                            </ol>
+                        </div><!-- /.col -->
+                    </div><!-- /.row -->
+                </div><!-- /.container-fluid -->
+            </div>
+            <!-- /.content-header -->
+            <!-- Main content -->
+            <section class="content">
+                <div class="container-fluid">
+                                    
+                    @(Html.Kendo().Window()
+                        .Name("window_details")
+                        .Title("Title Here")    
+                        .Draggable()
+                        .Pinned(true)    
+                        .Modal()
+                        .Visible(false)
+                        .Content(@<text>        
+                            <div class="row" id="window_details-content"></div>
+                        </text>)
+                        .Width("70%")
+                        .Actions(actions => actions.Close())
+                    )
+
+                     @(Html.Kendo().Window()
+                        .Name("winAboutPage")
+                        .Draggable()
+                        .Pinned(true)
+                        .Modal()
+                        .Visible(false)
+                        .Width(700)
+                        .Height(400)
+                        .Actions(actions => actions.Close())
+                        .Content(@<text>
+                                <div class="col-md-auto">
+                                        <div class="col-sm-auto">
+
+                                            <h5 style="margin-top: 5px">
+                                                <i class="k-icon k-i-info" style="font-size: 30px; margin-top: -6px"></i>
+                                                About this Page
+                                            </h5>
+                                            <div class="k-card" style="margin-top: 10px; min-height: 230px; margin-bottom: 30px">
+                                                <div class="k-card-body" id="divAboutForm">
+                                                    <about-page form-id="@ViewBag.FormID"></about-page>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                </text>)
+                        )
+   
+
+                    @RenderBody()
+                </div><!-- /.container-fluid -->
+            </section>
+            <!-- /.content -->
+        </div>
+        <!-- /.content-wrapper -->
+        <footer class="main-footer">            
+            Copyright © 2024. Universal Leaf Philippines, Inc. All rights reserved.
+            <div class="float-right d-none d-sm-inline-block">
+            TRS | @ViewBag.FormID
+            </div>
+        </footer>
+
+        <!-- Control Sidebar -->
+        <aside id="asideSettings" class="control-sidebar @(darkmode == "no" ? "control-sidebar-dark" : "control-sidebar-light")">
+            <!-- Control sidebar content goes here -->
+            <div class="p-3">
+                <h5>Settings</h5>
+                <hr class="mb-2">
+                <div class="mb-4">
+                    <input type="checkbox" id="chkBoxDarkMode" value="1" class="mr-1" @(darkmode == "no" ? "checked" : "")>
+                    <span>Dark Mode</span>
+                </div>
+            </div>
+        </aside>
+        <!-- /.control-sidebar -->
+    </div>
+    <!-- ./wrapper -->
+    <!-- jQuery -->
+    @*<script src="~/plugins/jquery/jquery.min.js"></script>*@
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>
+        $.widget.bridge('uibutton', $.ui.button)
+    </script>
+    <!-- Bootstrap 4 -->
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- ChartJS -->
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <!-- Sparkline -->
+    <script src="~/plugins/sparklines/sparkline.js"></script>
+    <!-- JQVMap -->
+    <script src="~/plugins/jqvmap/jquery.vmap.min.js"></script>
+    <script src="~/plugins/jqvmap/maps/jquery.vmap.usa.js"></script>
+    <!-- jQuery Knob Chart -->
+    <script src="~/plugins/jquery-knob/jquery.knob.min.js"></script>
+    <!-- daterangepicker -->
+    <script src="~/plugins/moment/moment.min.js"></script>
+    <script src="~/plugins/daterangepicker/daterangepicker.js"></script>
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="~/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <!-- Summernote -->
+    <script src="~/plugins/summernote/summernote-bs4.min.js"></script>
+    <!-- overlayScrollbars -->
+    <script src="~/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="~/dist/js/adminlte.js"></script>
+
+    <script src="~/plugins/inputmask/jquery.inputmask.min.js"></script>
+    <script src="~/monglib/mongScript.js"></script>
+    <script src="~/js/trainingSchedule.js"></script>
+    <!-- AdminLTE for demo purposes -->
+    @*<script src="~/dist/js/demo.js"></script>*@
+    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+    @*<script src="~/dist/js/pages/dashboard.js"></script>*@
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+<script>
+    function window_details_Resize(e) {
+        var wnd = $("#window_details").data("kendoWindow");
+        var $wrapper = wnd.wrapper;
+        var browserHeight = window.innerHeight;
+        var windowHeight = $wrapper.height();
+
+        // Only set height if window is taller than browser
+        if (windowHeight > browserHeight) {
+            wnd.setOptions({ height: browserHeight });
+        }
+    }
+
+    var getTrainingCourseDescriptionByCodeUrl = '@Url.Action("GetTrainingCourseDescriptionByCode", "TrainingSchedule")';
+    var getTrainingProgramJobClassesByCodeUrl = '@Url.Action("GetTrainingProgramJobClassesByCode", "TrainingProgramAndCourse")';
+
+
+    $(document).ready(function () {
+
+        HighlightSelectedNav()
+        
+         @if (Context.Session.GetString("SessionEmployeeNo") == null)
+         {
+             <script>
+                 window.location.href = '@Url.Action("Login", "Home")';
+             </script>         
+         }
+
+    })
+
+    $("#btnAbout").click(function(){
+        ShowAboutForm();
+    });
+
+    $("#btnReleaseNotes").click(function(){
+        ShowTimelineForm();
+    });
+
+
+    function ShowAboutForm()
+    {
+        var winAboutPage = $("#winAboutPage").data('kendoWindow');
+        winAboutPage.center().open();        
+    }
+
+    function ShowTimelineForm()
+    {
+        $.ajax({
+            url: "@Url.Action("ShowTimelinePage","Home")", //get partialview
+            type: "POST",
+            dataType: "html",
+            async: true,
+            error: function () {
+               
+            }
+        }).done(function (html) {
+
+
+            var winTimeline = $("#winTimeline").data('kendoWindow');
+            winTimeline.center().open();
+
+            $(timeline_div).html(html) //ipakita jay laman iti partialview
+
+        })
+    }
+
+    function MenuVisit(e) {
+        if (e.classList.contains("parent-menu")) {
+            $(".parent-menu").removeClass("active")
+        }
+        if (e.classList.contains("child-menu")) {
+            $(".child-menu").removeClass("active")
+        }
+        if (e.classList.contains("inner-child-menu")) {
+            $(".inner-child-menu").removeClass("active")
+        }
+
+        e.classList.add("active");
+
+    }
+
+    function HighlightSelectedNav() {
+
+        var menuList = document.getElementsByClassName('nav-link parent');
+        $(".nav-link form-menu").removeClass("active")
+        for (var i = 0; i < menuList.length; i++) {
+            if (menuList[i].dataset.id === '@(ViewBag.FormID)') {
+                menuList[i].classList.add("menu-is-opening")
+                menuList[i].classList.add("menu-open")
+                menuList[i].classList.add("active");
+            }
+        }
+
+        var childMenuList = document.getElementsByClassName('nav-link child-menu');
+
+        for (var i = 0; i < childMenuList.length; i++) {
+            if (childMenuList[i].dataset.id === '@(ViewBag.FormID)') {
+                childMenuList[i].parentElement.parentElement.parentElement.classList.add("menu-is-opening")
+                childMenuList[i].parentElement.parentElement.parentElement.classList.add("menu-open")
+                childMenuList[i].parentElement.parentElement.parentElement.firstChild.classList.add("active")
+                childMenuList[i].classList.add("active");
+            }
+        }
+
+        var innerChildMenuList = document.getElementsByClassName('nav-link inner-child-menu');
+
+        for (var i = 0; i < innerChildMenuList.length; i++) {
+            if (innerChildMenuList[i].dataset.id === '@(ViewBag.FormID)') {
+                innerChildMenuList[i].parentElement.parentElement.parentElement.parentElement.parentElement.classList.add("menu-is-opening")
+                innerChildMenuList[i].parentElement.parentElement.parentElement.parentElement.parentElement.classList.add("menu-open")
+                innerChildMenuList[i].parentElement.parentElement.parentElement.parentElement.parentElement.firstChild.classList.add("active")
+                innerChildMenuList[i].parentElement.parentElement.parentElement.classList.add("menu-is-opening")
+                innerChildMenuList[i].parentElement.parentElement.parentElement.classList.add("menu-open")
+                innerChildMenuList[i].classList.add("active");
+            }
+        }
+    }
+    
+    function themeselection(e) {
+        var dataItem = this.dataItem(e.item);
+
+        $.post({
+            //url: "/home/settheme",
+            url: "@Url.Action("SetTheme", "Home")",
+            data: { selection: dataItem.Value },
+            success: function (data) {
+                window.location = data.url;
+            }
+        });
+    }
+
+    $('#chkBoxDarkMode').change(function() {
+    var dark = "no";
+
+    // this will contain a reference to the checkbox
+    if (this.checked) {
+        $("body").addClass("dark-mode");
+
+        $("#asideMenu").removeClass("sidebar-light-warning")
+        $("#asideSettings").removeClass("control-sidebar-light")
+
+
+        $("#asideMenu").addClass("sidebar-dark-warning")
+        $("#asideSettings").addClass("control-sidebar-dark")
+
+        dark = "yes";
+    } else {
+        $("body").removeClass("dark-mode");
+
+        $("#asideMenu").removeClass("sidebar-dark-primary")
+        $("#asideSettings").removeClass("control-sidebar-dark")
+
+
+        $("#asideMenu").addClass("sidebar-light-primary")
+        $("#asideSettings").addClass("control-sidebar-light")
+
+        dark = "no";
+    }
+
+    $.post({
+            url: "@Url.Action("SetDarkMode", "Home")",
+            data: { selection: dark },
+            success: function (data) {
+
+            }
+      });
+    });
+
+    $(function() {
+        $('button.k-toolbar-button').filter(function() {
+            return $(this).text().trim() === 'Apply Filters';
+        }).css({
+            'background-color': '#f4a434',
+            'border-color': '#f4a434',
+            'color': 'white'
+        });
+    });
+</script>
+
