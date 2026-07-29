@@ -476,7 +476,7 @@ namespace TRS.Controllers
 
                 var traineeList = await _trainingRegistrationService.GetTraineeListByCode(_schedule.TrainingCode);
 
-                var traineeEmail = traineeList.Where(w => w.Attendance != "ABSENT").Select(e => e.EmployeeInfo.EmailAddress);
+                var traineeEmail = traineeList.Where(w => (w.Attendance).ToUpper() == "PRESENT").Select(e => e.EmployeeInfo.EmailAddress);
                         
                 var _coordinatorList = await _trainingCoordinatorService.GetTrainingCoordinatorList();
                 var coordinatorEmails = _globalService.GetEmployeeList()
