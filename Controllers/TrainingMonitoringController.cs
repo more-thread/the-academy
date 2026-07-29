@@ -306,7 +306,10 @@ namespace TRS.Controllers
                 List<TrainingRegistration> trainingRegistrations = await _trainingRegistrationService.GetTraineeListByCode(trainingSchedule.TrainingCode);                
                 List<TrainingFeedbackQuestions> feedbackQuestions = await _trainingFeedbackService.GetTrainingFeedbackQuestionsList();
                 feedbackQuestions = feedbackQuestions.Where(static w => w.Category != "Comments").ToList();
-                Dictionary<string, Dictionary<string, string>> feedbackAnswers = await _trainingFeedbackService.GetTrainingFeedbackAnswersByScheduleCode(code);
+                Dictionary<string, Dictionary<string, string>> feedbackAnswers = await _trainingFeedbackService.GetTrainingFeedbackAnswersByScheduleCode(code)
+                    ?? new Dictionary<string, Dictionary<string, string>>();
+
+                _globalService.Log($"GetTrainingFeedbackDetails: code={code}, employeesWithAnswers={feedbackAnswers.Count}", auditTrail, null);
 
                 TraineeRegistrationViewModel trainingScheduleViewModel = new TraineeRegistrationViewModel()
                 {
@@ -473,7 +476,7 @@ namespace TRS.Controllers
 
                 var traineeList = await _trainingRegistrationService.GetTraineeListByCode(_schedule.TrainingCode);
 
-                var traineeEmail = traineeList.Where(w => w.Attendance != "ABSENT").Select(e => e.EmployeeInfo.EmailAddress);
+                var traineeEmail = traineeList.Where(w => (w.Attendance).ToUpper() == "PRESENT").Select(e => e.EmployeeInfo.EmailAddress);
                         
                 var _coordinatorList = await _trainingCoordinatorService.GetTrainingCoordinatorList();
                 var coordinatorEmails = _globalService.GetEmployeeList()

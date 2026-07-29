@@ -67,17 +67,31 @@ namespace TRS.Services
             feedbacks = feedbacks.Where(w => w.TrainingFeedbackQuestions.Category != "Comments").ToList();
 
             // Group by employee and create a dictionary of answers with text mapping
-            var answersByEmployee = feedbacks
+            try
+            {
+                var answersByEmployee = feedbacks
                 .GroupBy(f => f.EmployeeNo)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.ToDictionary(
-                        f => f.TrainingFeedbackQuestions.QuestionID,
-                        f => MapAnswerToText(f.Answer ?? "")
-                    )
+                    g => g
+                        .GroupBy(f => f.TrainingFeedbackQuestions.QuestionID)
+                        .ToDictionary(
+                            qg => qg.Key,
+                            qg => MapAnswerToText(
+                                qg.OrderByDescending(f => f.DateModified ?? f.DateCreated)
+                                  .First().Answer ?? "")
+                        )
                 );
 
-            return answersByEmployee;
+
+                return answersByEmployee;
+            }
+            catch (Exception ex)
+            {
+                return null;
+                throw;
+            }
+            
         }
 
         /// <summary>

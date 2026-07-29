@@ -179,13 +179,13 @@
                 var feedbackDataElement = document.getElementById('feedback-data');
                 if (!feedbackDataElement) {
                     console.warn('Feedback data element not found');
-                    return "No Data Element";
+                    return "";
                 }
 
                 var feedbackAnswersJson = feedbackDataElement.getAttribute('data-feedback-answers');
                 if (!feedbackAnswersJson || feedbackAnswersJson === '{}') {
                     console.warn('No feedback answers data found:', feedbackAnswersJson);
-                    return "No JSON Data";
+                    return "";
                 }
 
                 var feedbackAnswers = JSON.parse(feedbackAnswersJson);
