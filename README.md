@@ -1,6 +1,6 @@
 # TRS — Training Registrar System
 
-TRS is an ASP.NET Core 7 MVC + Razor Pages application for Universal Leaf that manages employee training programs, courses, schedules, registrations, approvals, and feedback.
+TRS is an ASP.NET Core 7 MVC + Razor Pages application that manages employee training programs, courses, schedules, registrations, approvals, and feedback.
 
 It's a single-project internal enterprise app (`TRS.csproj` / `TRS.sln`), backed by SQL Server via EF Core, with a Kendo UI (Telerik) + Bootstrap + jQuery frontend. There is no separate frontend app and no test project — it's a classic server-rendered MVC app with Razor views under `Views/<ControllerName>/`.
 
