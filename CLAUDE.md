@@ -107,6 +107,7 @@ Issue titles carry both keys, e.g. `000111-0726-002 TRAINING PROFILE viewing acc
 3. Append a new block: one blank row, the header row, then rows numbered from `1` — one row per distinct thing a tester must confirm.
 4. Fill `IT Sub Request No.` from the issue title and `IT in Charge` with `JSR`.
 5. Mention the MOC entry in the PR description so the reviewer can check it.
+6. Open the PR against `stage`, not `main` — see [Branching and PRs](#branching-and-prs).
 
 Add MOC entries when resolving an issue — not for every incidental commit.
 
@@ -133,6 +134,19 @@ wb.save("Docs/TRS MOC/TRTT-0004_TRAINING MONITORING_MOC.xlsx")
 ```
 
 An `openpyxl` round-trip drops embedded images from existing detail sheets. That's accepted here, since detail sheets and screenshots are optional.
+
+## Branching and PRs
+
+**Work raised as a GitHub issue is PR'd into `stage`, never straight into `main`.** `main` is GitHub's default base, so the base branch has to be set explicitly every time — it will not be right by default:
+
+```
+git checkout -b <branch> gh/stage        # branch off stage, not main
+gh pr create --base stage --head <branch>
+```
+
+`stage` is the integration branch that collects issue work for QA/UAT sign-off; `main` is what has already passed it. Promotion from `stage` to `main` is a separate, human-initiated step — don't open or merge that PR as part of resolving an issue.
+
+Commit messages carry no `Co-Authored-By` trailer.
 
 ## GitHub Actions / `@claude`
 
