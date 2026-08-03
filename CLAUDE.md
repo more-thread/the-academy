@@ -68,8 +68,11 @@ A **MOC** (Method of Confirmation) is the QA/UAT sign-off checklist for a change
 | `TRTT-0002` | TRAINING REGISTRATION | `Docs/TRS MOC/TRTT-0002_TRAINING REGISTRATION_MOC.xlsx` |
 | `TRTT-0003` | TRAINEE REGISTRATION | `Docs/TRS MOC/TRTT-0003_TRAINEE REGISTRATION_MOC.xlsx` |
 | `TRTT-0004` | TRAINING MONITORING | `Docs/TRS MOC/TRTT-0004_TRAINING MONITORING_MOC.xlsx` |
+| `TRRR-0001` | TRAINING PROFILE | `Docs/TRS MOC/TRRR-0001_TRAINING PROFILE_MOC.xlsx` |
 
-`Docs/TRS MOC/sample format.xlsx` is the canonical template and defines the structure below. New forms continue the sequence — `TRTT-0005` is the next free id. If the form's real id is documented elsewhere (an IT request, an existing ULIISAdmin entry), use that and say so rather than guessing.
+`Docs/TRS MOC/sample format.xlsx` is the canonical template and defines the structure below.
+
+**Never invent a form id.** Issue bodies usually state it outright — issue #6 ends with `Form ID: TRRR-0001` / `Form Name: TRAINING PROFILE`. Use that. The prefix is meaningful and not always `TRTT`: `TRTT-*` is a transaction form, `TRRR-*` a report. If the issue doesn't give one and no existing MOC matches the form, ask rather than allocating an id.
 
 ### Layout
 
