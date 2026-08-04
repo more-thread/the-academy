@@ -360,4 +360,10 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
+
 FodyWeavers.xsd
+
+# Ignore appsettings files that may contain sensitive configuration (local secrets, passwords, connection strings)
+# Adjust as needed — if you need some appsettings.*.json tracked, remove that specific pattern.
+**/appsettings.json
+**/appsettings.*.json
