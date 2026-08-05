@@ -101,9 +101,11 @@ namespace TRS.Controllers
         {
             try
             {
-                
+                if (!CanViewEmployeeProfile(paramEmployeeNo))
+                    return Unauthorized();
+
                 List<TrainingRegistration> _list = await _trainingRegistrationService.GetTrainingListByEmployeeNo(paramEmployeeNo??auditTrail["LoggedEmployeeNo"]);
-                
+
 
                 if (paramProgramCode != null && paramProgramCode != "ALL")
                     _list = _list.Where(w => w.TrainingSchedule.Program.ProgramCode == paramProgramCode).ToList();
@@ -131,18 +133,45 @@ namespace TRS.Controllers
         
         public async Task<JsonResult> GetSubordinateList()
         {
-            List<VwHrEmployeeInfo> _list = _globalService.GetEmployeeList().Where(w=>w.SuperiorId.ToString() == auditTrail["LoggedEmployeeNo"] && w.EmployeeStatus == "A").ToList();          
+            long loggedEmployeeNo = Convert.ToInt64(auditTrail["LoggedEmployeeNo"]);
+
+            List<VwHrEmployeeInfo> _list = _globalService.GetEmployeeList().Where(w =>
+                (
+                w.SuperiorId == loggedEmployeeNo ||
+                w.SectionHeadId == loggedEmployeeNo ||
+                w.DepartmentHeadId == loggedEmployeeNo
+                )
+            && w.EmployeeStatus == "A").ToList();
 
             return Json(_list.OrderBy(s => s.EmployeeName));
         }
 
-        
+        // An employee can view their own profile, or a profile of someone whose superior,
+        // section head, or department head they are (mirrors GetSubordinateList's hierarchy).
+        private bool CanViewEmployeeProfile(string paramEmployeeNo)
+        {
+            if (string.IsNullOrEmpty(paramEmployeeNo) || paramEmployeeNo == auditTrail["LoggedEmployeeNo"])
+                return true;
+
+            long loggedEmployeeNo = Convert.ToInt64(auditTrail["LoggedEmployeeNo"]);
+            VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(paramEmployeeNo);
+
+            return _empDetails != null &&
+                (
+                _empDetails.SuperiorId == loggedEmployeeNo ||
+                _empDetails.SectionHeadId == loggedEmployeeNo ||
+                _empDetails.DepartmentHeadId == loggedEmployeeNo
+                );
+        }
+
         public async Task<IActionResult> GetRecommendedCourseList([DataSourceRequest] DataSourceRequest request,string paramEmployeeNo = null)
         {
             try
             {
-                
-                List<TrainingRegistration> _registrationlist = await _trainingRegistrationService.GetTrainingRegistrationList();       
+                if (!CanViewEmployeeProfile(paramEmployeeNo))
+                    return Unauthorized();
+
+                List<TrainingRegistration> _registrationlist = await _trainingRegistrationService.GetTrainingRegistrationList();
                 List<TrainingCourse> _list = await _trainingCourseService.GetTrainingCourseList();
 
                 List<TrainingRegistration> _recommendedList = new();
