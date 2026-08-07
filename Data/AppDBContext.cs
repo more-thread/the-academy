@@ -11,6 +11,7 @@ namespace TRS.Data
             : base(options)
         {
         }
+        public DbSet<CourseCategory> mCourseCategory {  get; set; }
         public DbSet<TrainingProgram> mTrainingProgram {get;set;}
         public DbSet<TrainingCourse> mTrainingCourse {get;set;}
         public DbSet<JobClass> mJobClass {get;set;}
@@ -30,7 +31,7 @@ namespace TRS.Data
             {
                 entity.HasNoKey();
             });
-            
+
             modelBuilder.Entity<UserInfo>(entity =>
             {
                 entity.HasNoKey();
