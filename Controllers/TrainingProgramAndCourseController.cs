@@ -335,16 +335,22 @@ namespace TRS.Controllers
             {
                 
                 TrainingCourse trainingCourse =  await _trainingCourseService.GetTrainingCourseByCode(code);
+                List<CourseCategory> courseCategory = await _trainingProgramService.GetCourseCategoriesList();
                 TrainingProgram programDetails = null;
+                CourseCategory category = null;
                 if(trainingCourse != null)
-                programDetails = await _trainingProgramService.GetTrainingProgramByCode(trainingCourse.Program.ProgramCode);
+                {
+                    programDetails = await _trainingProgramService.GetTrainingProgramByCode(trainingCourse.Program.ProgramCode);
+                    category = courseCategory.Where(c => c.CategoryCode == trainingCourse.CategoryCode).FirstOrDefault();
+                }
 
                 List<JobClass> jobclassList =  await _jobclassService.GetHRJobClassList();
                 TrainingProgramAndCourseViewModel trainingProgramAndCourseViewModel = new TrainingProgramAndCourseViewModel(){
                     FormControl = new FormControlModel(control),
                     TrainingProgram = programDetails,
                     JobClasses = jobclassList,
-                    TrainingCourse = trainingCourse
+                    TrainingCourse = trainingCourse,
+                    CourseCategory = category
                 };
 
                 return PartialView("~/Views/TrainingProgramAndCourse/_TrainingCourseDetails.cshtml", trainingProgramAndCourseViewModel);                
@@ -462,6 +468,21 @@ namespace TRS.Controllers
 
             // Return success response
             return Ok();
+        }
+
+        public async Task<JsonResult> GetCourseCategoryList()
+        {
+            List<CourseCategory> _list = new()
+            {
+                new CourseCategory
+                {
+                    CategoryCode = "",
+                    CategoryTitle = "",
+                }
+            };
+            _list.AddRange(await _trainingProgramService.GetCourseCategoriesList());
+
+            return Json(_list.Where(w => w.Status == true).ToList());
         }
 #endregion
 
