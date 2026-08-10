@@ -168,9 +168,8 @@ namespace TRS.Controllers
                     _trainingRegistration.RegistrationConfirmedBy = auditTrail["UserID"];
                     _trainingRegistration.RegistrationConfirmedDate = _globalService.GetDateTime();                   
                     _trainingSchedule.RegisteredEmployeeCount =  (_trainingSchedule.RegisteredEmployeeCount??0) + 1;
-                    
-                    if(_trainingSchedule.RegisteredEmployeeCount == _trainingSchedule.ClassSize)
-                        _trainingSchedule.RegistrationStatus = "CLOSED";
+
+                    _trainingSchedule.RegistrationStatus = _trainingSchedule.ComputeRegistrationStatus();
 
                     //Registration-Confirmed (Individual)
                     //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +
@@ -199,14 +198,13 @@ namespace TRS.Controllers
                     if(_trainingRegistration.TrainingRegistrationStatus == "REGISTERED")
                         _trainingSchedule.RegisteredEmployeeCount -= 1;
 
-                    if(_trainingSchedule.RegisteredEmployeeCount != _trainingSchedule.ClassSize)
-                        _trainingSchedule.RegistrationStatus = "OPEN";
-                        
+                    _trainingSchedule.RegistrationStatus = _trainingSchedule.ComputeRegistrationStatus();
+
                     _trainingRegistration.TrainingRegistrationStatus = "REJECTED";
                     _trainingRegistration.RegistrationRejectedBy = auditTrail["UserID"];
-                    _trainingRegistration.RegistrationRejectedDate = _globalService.GetDateTime();  
+                    _trainingRegistration.RegistrationRejectedDate = _globalService.GetDateTime();
 
-                     
+
                     //Registration-Rejected (Individual)
                     //var htmlString = "<p>Dear Ma'am/Sir,<br><br>" +     
                     //$"This is to inform you that your registration to this training, <b>{_trainingRegistration.TrainingSchedule.TrainingCode} - {_trainingRegistration.TrainingSchedule.Course.CourseTitle}</b> has been rejected due to this reason: {paramReason}.<br><br>" +
@@ -267,18 +265,16 @@ namespace TRS.Controllers
                         _trainingRegistration.RegistrationConfirmedDate = _globalService.GetDateTime();                 
 
                         _trainingSchedule.RegisteredEmployeeCount =  (_trainingSchedule.RegisteredEmployeeCount??0) + 1;
-                        
-                        if(_trainingSchedule.RegisteredEmployeeCount == _trainingSchedule.ClassSize)
-                            _trainingSchedule.RegistrationStatus = "CLOSED";
 
-                    }                    
-                    else{                    
+                        _trainingSchedule.RegistrationStatus = _trainingSchedule.ComputeRegistrationStatus();
+
+                    }
+                    else{
                         if(_trainingRegistration.TrainingRegistrationStatus == "REGISTERED")
                             _trainingSchedule.RegisteredEmployeeCount -= 1;
 
-                        if(_trainingSchedule.RegisteredEmployeeCount != _trainingSchedule.ClassSize)
-                            _trainingSchedule.RegistrationStatus = "OPEN";
-                            
+                        _trainingSchedule.RegistrationStatus = _trainingSchedule.ComputeRegistrationStatus();
+
                         _trainingRegistration.TrainingRegistrationStatus = "REJECTED";
                         _trainingRegistration.RegistrationRejectedBy = auditTrail["UserID"];
                         _trainingRegistration.RegistrationRejectedDate = _globalService.GetDateTime();                 

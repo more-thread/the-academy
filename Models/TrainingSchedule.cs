@@ -88,5 +88,22 @@ namespace TRS.Models
         {
             get { return $"{StartTime} - {EndTime}"; }
         }
+        [NotMapped]
+        public bool IsRegistrationAutoClosed
+        {
+            get
+            {
+                return ScheduleStatus == "CANCELLED"
+                    || StartDate.Date <= DateTime.Now.Date
+                    || (RegisteredEmployeeCount ?? 0) >= ClassSize;
+            }
+        }
+        public string ComputeRegistrationStatus()
+        {
+            if (IsRegistrationAutoClosed)
+                return "CLOSED";
+
+            return ScheduleStatus == "AVAILABLE" ? "OPEN" : "CLOSED";
+        }
     }
 }

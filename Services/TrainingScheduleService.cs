@@ -18,31 +18,54 @@ namespace TRS.Services
         {
             try
             {
-                var result = _context.tTrainingSchedule.Where(w => w.TrainingCode == code)
+                var result = await _context.tTrainingSchedule.Where(w => w.TrainingCode == code)
                         .Include(c=>c.AdditionalJobClasses)
                         .Include(c => c.Program)
                         .Include(c => c.Program.JobClasses)
                         .Include(c => c.Course)
                         .FirstOrDefaultAsync();
-                return await result;    
+
+                if (result != null && ApplyAutoRegistrationStatus(result))
+                    _context.SaveChanges();
+
+                return result;
             }
             catch (System.Exception)
             {
-                
+
                 throw;
             }
-            
+
         }
-        
+
         public async Task<List<TrainingSchedule>> GetTrainingScheduleList()
-        {             
-            var result = _context.tTrainingSchedule
+        {
+            var result = await _context.tTrainingSchedule
                         .Include(c => c.AdditionalJobClasses)
                         .Include(c => c.Program)
                         .Include(c => c.Program.JobClasses)
                         .Include(c => c.Course)
-                        .ToListAsync();            
-            return await result;
+                        .ToListAsync();
+
+            var changed = false;
+            foreach (var schedule in result)
+                changed |= ApplyAutoRegistrationStatus(schedule);
+
+            if (changed)
+                _context.SaveChanges();
+
+            return result;
+        }
+
+        // Recomputes RegistrationStatus based on class size, start date, and cancellation - see TrainingSchedule.ComputeRegistrationStatus().
+        private bool ApplyAutoRegistrationStatus(TrainingSchedule schedule)
+        {
+            var desiredStatus = schedule.ComputeRegistrationStatus();
+            if (schedule.RegistrationStatus == desiredStatus)
+                return false;
+
+            schedule.RegistrationStatus = desiredStatus;
+            return true;
         }
         public async Task<List<VwHrRegion>> GetHRRegionList()
         {             

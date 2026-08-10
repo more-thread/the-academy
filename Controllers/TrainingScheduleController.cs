@@ -334,17 +334,9 @@ namespace TRS.Controllers
                 
                 List<TrainingRegistration> traineeList = await _trainingRegistrationService.GetTraineeListByCode(model.TrainingCode);
 
-
-                var registeredCount = 0;
-
 //- Update the Training Registration Status of employees from REGISTERED or FOR CONFIRMATION to 'SCHEDULE FOR CONFIRMATION' based on the Training Code of the affected registered training of employees.
                 foreach (var item in traineeList)
                 {
-                    if(item.TrainingRegistrationStatus == "REGISTERED")
-                    {
-                        registeredCount += 1;
-                    }
-
                     if(item.TrainingRegistrationStatus == "REGISTERED" ||item.TrainingRegistrationStatus == "FOR CONFIRMATION")
                     {
                         item.TrainingRegistrationStatus = "SCHEDULE FOR CONFIRMATION";         
@@ -369,12 +361,8 @@ namespace TRS.Controllers
                 _details.ScheduleModifiedBy = auditTrail["UserID"];                
                 _details.ScheduleModifiedDate = _globalService.GetDateTime();
 
-//- if the TRAINING SCHEDULE STATUS is AVAILABLE and CLASS SIZE is greater than the number of employees registered to the Training Code, then the REGISTRATION STATUS will be set or updated to OPEN.
-                if(_details.ScheduleStatus == "AVAILABLE")
-                {
-                    if(_details.ClassSize < registeredCount)
-                        _details.RegistrationStatus = "OPEN";
-                }
+//- Auto-close registration if confirmed participants reached Class Size, Start Date has been reached, or the schedule is canceled; otherwise auto-open while published.
+                _details.RegistrationStatus = _details.ComputeRegistrationStatus();
 
                 // update the record
                 _trainingScheduleService.UpdateSchedule();
@@ -583,8 +571,8 @@ namespace TRS.Controllers
 
                 var _logMsg = $"Set the training schedule to published: TrainingSchedule ({paramCode})";
 
-                _details.RegistrationStatus = "OPEN";
                 _details.ScheduleStatus = "AVAILABLE";
+                _details.RegistrationStatus = _details.ComputeRegistrationStatus();
 
                 // update the record
                 _trainingScheduleService.UpdateSchedule();
@@ -614,7 +602,40 @@ namespace TRS.Controllers
 
         }
 
-       
+        [HttpPost]
+        public async Task<ActionResult> UpdateRegistrationStatus(string paramCode, string paramStatus)
+        {
+            try
+            {
+                TrainingSchedule _details = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramCode);
+
+                if (_details == null)
+                    return BadRequest("Training schedule not found.");
+
+                if (_details.IsRegistrationAutoClosed)
+                    return BadRequest("Registration Status cannot be changed while it is auto-closed by the system.");
+
+                if (paramStatus != "OPEN" && paramStatus != "CLOSED")
+                    return BadRequest("Invalid Registration Status.");
+
+                _details.RegistrationStatus = paramStatus;
+                _details.ScheduleModifiedBy = auditTrail["UserID"];
+                _details.ScheduleModifiedDate = _globalService.GetDateTime();
+
+                _trainingScheduleService.UpdateSchedule();
+
+                _globalService.Log($"Set the TrainingSchedule({paramCode}) Registration Status to {paramStatus}", auditTrail, null);
+            }
+            catch (System.Exception ex)
+            {
+                _globalService.Log($"Error: {RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail, ex);
+                return BadRequest(ex.Message);
+            }
+
+            return Ok();
+        }
+
+
         public async Task<JsonResult> GetHRJobClassList(string ProgramCode)
         {
             List<JobClass> _list = await _jobclassService.GetHRJobClassList();
