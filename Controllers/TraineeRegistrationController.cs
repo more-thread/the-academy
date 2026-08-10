@@ -214,11 +214,7 @@ namespace TRS.Controllers
                 _trainingRegistration.ReasonForCancellation = paramReason;
 
 
-                if(_trainingSchedule.RegisteredEmployeeCount == _trainingSchedule.ClassSize)
-                {
-                    _trainingSchedule.RegistrationStatus = "CLOSED";
-                }else
-                    _trainingSchedule.RegistrationStatus = "OPEN";
+                _trainingSchedule.RegistrationStatus = _trainingSchedule.ComputeRegistrationStatus();
 
 
                 _trainingRegistrationService.UpdateRegistration();
