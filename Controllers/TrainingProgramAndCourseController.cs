@@ -341,7 +341,7 @@ namespace TRS.Controllers
                 if(trainingCourse != null)
                 {
                     programDetails = await _trainingProgramService.GetTrainingProgramByCode(trainingCourse.Program.ProgramCode);
-                    category = courseCategory.Where(c => c.CategoryCode == trainingCourse.CategoryCode).FirstOrDefault();
+                    category = courseCategory.Where(c => c.CategoryCode == trainingCourse.TrainingCategory.CategoryCode).FirstOrDefault();
                 }
 
                 List<JobClass> jobclassList =  await _jobclassService.GetHRJobClassList();

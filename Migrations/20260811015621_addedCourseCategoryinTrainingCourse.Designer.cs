@@ -12,8 +12,8 @@ using TRS.Data;
 namespace TRS.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20260807062706_addCategoryCodeTrainingCourse")]
-    partial class addCategoryCodeTrainingCourse
+    [Migration("20260811015621_addedCourseCategoryinTrainingCourse")]
+    partial class addedCourseCategoryinTrainingCourse
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -170,9 +170,8 @@ namespace TRS.Migrations
                     b.Property<string>("CourseCode")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CategoryCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("CourseCategory")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CourseDescription")
                         .IsRequired()
@@ -231,6 +230,8 @@ namespace TRS.Migrations
                         .HasColumnType("bit");
 
                     b.HasKey("CourseCode");
+
+                    b.HasIndex("CourseCategory");
 
                     b.HasIndex("ProgramCode");
 
@@ -885,6 +886,10 @@ namespace TRS.Migrations
 
             modelBuilder.Entity("TRS.Models.TrainingCourse", b =>
                 {
+                    b.HasOne("TRS.Models.CourseCategory", "TrainingCategory")
+                        .WithMany()
+                        .HasForeignKey("CourseCategory");
+
                     b.HasOne("TRS.Models.TrainingProgram", "Program")
                         .WithMany("Courses")
                         .HasForeignKey("ProgramCode")
@@ -892,6 +897,8 @@ namespace TRS.Migrations
                         .IsRequired();
 
                     b.Navigation("Program");
+
+                    b.Navigation("TrainingCategory");
                 });
 
             modelBuilder.Entity("TRS.Models.TrainingFeedback", b =>
