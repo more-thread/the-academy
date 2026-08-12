@@ -39,17 +39,16 @@ namespace TRS.Controllers
         {
             try
             {
-                //var idno = RouteData.Values["id"] + Request.QueryString.ToString();
-                //var getid = idno.Substring(4, idno.Length - 4);
+                var idno = RouteData.Values["id"] + Request.QueryString.ToString();
+                var getid = idno.Substring(4, idno.Length - 4);
 
-                //if (string.IsNullOrEmpty(getid))
-                //{
-                //    _logger.LogWarning("Crypto action called without id parameter");
-                //    return RedirectToAction("Error");
-                //}
+                if (string.IsNullOrEmpty(getid))
+                {
+                    _logger.LogWarning("Crypto action called without id parameter");
+                    return RedirectToAction("Error");
+                }
 
-                //var employeeNo = await _authService.ValidateAndDecryptEmployeeIdAsync(getid);
-                var employeeNo = "1027845";
+                var employeeNo = await _authService.ValidateAndDecryptEmployeeIdAsync(getid);
 
                 if (string.IsNullOrEmpty(employeeNo))
                 {
