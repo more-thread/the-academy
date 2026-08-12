@@ -219,7 +219,7 @@
             WithPostTest: ($("input[name='rad_postTest']:checked").val() === "yes")? true:false,
             PostTestTotalScore:  $("#txt_postTotalScore").val(),
             WithEvaluation: ($("input[name='rad_evaluation']:checked").val() === "yes")? true:false,
-            CategoryCode: $(dd_CourseCategory).data("kendoDropDownList").value()
+            TrainingCategory: {CategoryCode:$(dd_CourseCategory).data("kendoDropDownList").value()}
         })
 
         //check if title exists

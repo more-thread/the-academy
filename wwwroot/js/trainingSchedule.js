@@ -23,7 +23,8 @@ function dd_Course_OnChangeCourse(){
     url: getTrainingCourseDescriptionByCodeUrl,
     data: { courseCode: _thisDropDownvalue },
     success: function (data) {
-        $(txtCourseDescription).val(data);
+        $(txtCourseDescription).val(data.CourseDescription);
+        $(txtTrainingCategory).val(data.CategoryTitle);
     }
     });
 }

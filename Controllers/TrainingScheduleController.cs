@@ -63,8 +63,13 @@ namespace TRS.Controllers
         public async Task<IActionResult> GetTrainingScheduleWindow(string control,string code)
         {
             try
-            {    
+            {
+                TrainingCourse trainingCourse = null;
                 TrainingSchedule trainingSchedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(code);
+                if (trainingSchedule != null)
+                {
+                    trainingCourse = await _trainingCourseService.GetTrainingCourseByCode(trainingSchedule.Course.CourseCode);
+                }
                 List<JobClass> jobclassList =  await _jobclassService.GetHRJobClassList();
                 
                 FormControlModel formControlModel = new FormControlModel(control);
@@ -72,7 +77,8 @@ namespace TRS.Controllers
                 TrainingScheduleViewModel trainingScheduleViewModel = new TrainingScheduleViewModel(){
                     FormControl = formControlModel,                    
                     TrainingScheduleDetails = trainingSchedule ?? null,
-                    JobClasses = jobclassList
+                    JobClasses = jobclassList,
+                    TrainingCourseDetails = trainingCourse ?? null
                 };
                 
                 return PartialView("~/Views/Shared/_TrainingScheduleDetails.cshtml", trainingScheduleViewModel);
@@ -84,8 +90,16 @@ namespace TRS.Controllers
                 return BadRequest(ex.Message);
                 throw;
             }
-        }      
-        
+        }
+
+        public async Task<JsonResult> GetTrainingCategoryByCategoryCode(string paramCategoryCode)
+        {
+            List<CourseCategory> trainingCategories = await _trainingProgramService.GetCourseCategoriesList();
+            CourseCategory courseCategory = trainingCategories.Where(c => c.CategoryCode == paramCategoryCode).FirstOrDefault();
+
+            return Json(courseCategory);
+        }
+
         [HttpGet]
         public IActionResult GetTrainingScheduleCancellationWindow()
         {
@@ -208,12 +222,25 @@ namespace TRS.Controllers
             return Json(_list);
         }
 
+        [HttpGet]
         public async Task<JsonResult> GetTrainingCourseDescriptionByCode(string courseCode)
         {
+            //Fetch trianing course
             TrainingCourse _details = await _trainingCourseService.GetTrainingCourseByCode(courseCode);
+
+            if (_details == null)
+                return Json(null);
             
-            return Json(_details == null ? null : _details.CourseDescription);
+            //get the needed data
+            var result = new
+            {
+                CourseDescription = _details.CourseDescription,
+                CategoryTitle = _details.TrainingCategory.CategoryTitle
+            };
+
+            return Json(result);
         }
+
         
         [HttpGet]
         public async Task<ActionResult> ValidateTime(DateTime startDate, DateTime endDate, TimeSpan startTime, TimeSpan endTime,string region,string TrainingCode = null)
