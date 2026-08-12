@@ -359,7 +359,7 @@ namespace TRS.Controllers
                                         .ToList();
 
                 var toRecipient = string.Join(";", coordinatorEmails);
-                var copyRecipient = superiorEmail;
+                var copyRecipient = superiorEmail+";"+_empDetails.EmailAddress;
 
                 var template = EmailTemplates.Get("RegistrationCancellation");
 
