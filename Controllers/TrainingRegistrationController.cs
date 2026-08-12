@@ -359,7 +359,7 @@ namespace TRS.Controllers
                                         .ToList();
 
                 var toRecipient = string.Join(";", coordinatorEmails);
-                var copyRecipient = superiorEmail+";"+ "robert_veloria@universalleaf.com.ph";
+                var copyRecipient = superiorEmail;
 
                 var template = EmailTemplates.Get("RegistrationCancellation");
 
