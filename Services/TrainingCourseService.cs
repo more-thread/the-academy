@@ -15,7 +15,7 @@ namespace TRS.Services
         }
         public async Task<TrainingCourse> GetTrainingCourseByCode(string code)
         {
-            var result = _context.mTrainingCourse.Where(w => w.CourseCode == code).Include(c => c.Program).FirstOrDefaultAsync();
+            var result = _context.mTrainingCourse.Where(w => w.CourseCode == code).Include(c => c.Program).Include(c => c.TrainingCategory).FirstOrDefaultAsync();
             return await result;
         }
 
