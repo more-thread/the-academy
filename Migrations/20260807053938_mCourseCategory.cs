@@ -11,11 +11,6 @@ namespace TRS.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "FormAccess");
-
-            migrationBuilder.DropTable(
-                name: "UserInfo");
 
             migrationBuilder.CreateTable(
                 name: "mCourseCategory",

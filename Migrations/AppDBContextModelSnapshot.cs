@@ -65,6 +65,53 @@ namespace TRS.Migrations
                     b.ToTable("mCourseCategory", "TRS");
                 });
 
+            modelBuilder.Entity("TRS.Models.FormAccess", b =>
+                {
+                    b.Property<string>("AccessType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccessibleDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Controller")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CurrentVersion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DevInfo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DevInitials")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmployeeNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SubMenuID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SubMenuName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable("FormAccess");
+                });
+
             modelBuilder.Entity("TRS.Models.JobClass", b =>
                 {
                     b.Property<long>("RecordNo")
@@ -167,9 +214,9 @@ namespace TRS.Migrations
                     b.Property<string>("CourseCode")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CategoryCode")
+                    b.Property<string>("CourseCategory")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CourseDescription")
                         .IsRequired()
@@ -228,6 +275,8 @@ namespace TRS.Migrations
                         .HasColumnType("bit");
 
                     b.HasKey("CourseCode");
+
+                    b.HasIndex("CourseCategory");
 
                     b.HasIndex("ProgramCode");
 
@@ -660,6 +709,56 @@ namespace TRS.Migrations
                     b.ToTable("tTrainingSchedule", "TRS");
                 });
 
+            modelBuilder.Entity("TRS.Models.UserInfo", b =>
+                {
+                    b.Property<string>("BranchID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BranchName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DepartmentID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DepartmentName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("DisplayPic")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("EmailAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmpID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HREmployeeStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PositionName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SectionID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SectionName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserID")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable("UserInfo");
+                });
+
             modelBuilder.Entity("TRS.Models.UserLogs", b =>
                 {
                     b.Property<long>("RecordNo")
@@ -882,6 +981,12 @@ namespace TRS.Migrations
 
             modelBuilder.Entity("TRS.Models.TrainingCourse", b =>
                 {
+                    b.HasOne("TRS.Models.CourseCategory", "TrainingCategory")
+                        .WithMany()
+                        .HasForeignKey("CourseCategory")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("TRS.Models.TrainingProgram", "Program")
                         .WithMany("Courses")
                         .HasForeignKey("ProgramCode")
@@ -889,6 +994,8 @@ namespace TRS.Migrations
                         .IsRequired();
 
                     b.Navigation("Program");
+
+                    b.Navigation("TrainingCategory");
                 });
 
             modelBuilder.Entity("TRS.Models.TrainingFeedback", b =>

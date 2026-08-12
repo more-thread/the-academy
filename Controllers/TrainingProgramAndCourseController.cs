@@ -341,7 +341,7 @@ namespace TRS.Controllers
                 if(trainingCourse != null)
                 {
                     programDetails = await _trainingProgramService.GetTrainingProgramByCode(trainingCourse.Program.ProgramCode);
-                    category = courseCategory.Where(c => c.CategoryCode == trainingCourse.CategoryCode).FirstOrDefault();
+                    category = courseCategory.Where(c => c.CategoryCode == trainingCourse.TrainingCategory.CategoryCode).FirstOrDefault();
                 }
 
                 List<JobClass> jobclassList =  await _jobclassService.GetHRJobClassList();
@@ -372,13 +372,17 @@ namespace TRS.Controllers
                 List<TrainingCourse> count = await _trainingCourseService.GetTrainingCourseList();
                 int nextId = count.Count + 1;               
 
+                //fetch category selected
+                List<CourseCategory> trainingCategories = await _trainingProgramService.GetCourseCategoriesList();
+
                 model.CourseCode = model.Program.ProgramCode +"-"+ nextId.ToString("D3");                
                 model.CreatedBy = auditTrail["UserID"];
                 model.CreatedByComputerUsed = auditTrail["HostName"];
                 model.DateCreated = _globalService.GetDateTime();
                 model.Status = true;               
                 model.Program = await _trainingProgramService.GetTrainingProgramByCode(model.Program.ProgramCode);
-                
+                model.TrainingCategory = trainingCategories.Where(c => c.CategoryCode == model.TrainingCategory.CategoryCode).FirstOrDefault();
+
                 // Add the new record into the database
                 _trainingCourseService.AddCourse(model);
 

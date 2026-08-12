@@ -221,6 +221,16 @@
                 )
             </div>
         </div>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Training Category:</label>
+            <div class="col-sm-8">
+                @(Html.Kendo().TextBox()
+                    .Enable(false)
+                    .Name("txtTrainingCategory")
+                    .Value(@Model.TrainingCourseDetails?.TrainingCategory?.CategoryTitle)
+                )
+            </div>
+        </div>
     </div>
 
     <!--RIGHT SIDE-->
