@@ -337,12 +337,17 @@ namespace TRS.Controllers
                 TrainingCourse trainingCourse =  await _trainingCourseService.GetTrainingCourseByCode(code);
                 List<CourseCategory> courseCategory = await _trainingProgramService.GetCourseCategoriesList();
                 TrainingProgram programDetails = null;
-                CourseCategory category = null;
+                CourseCategory category = new CourseCategory();
                 if(trainingCourse != null)
                 {
                     programDetails = await _trainingProgramService.GetTrainingProgramByCode(trainingCourse.Program.ProgramCode);
-                    category = courseCategory.Where(c => c.CategoryCode == trainingCourse.TrainingCategory.CategoryCode).FirstOrDefault();
+                    if (trainingCourse.TrainingCategory != null)
+                    {
+                        category = courseCategory.Where(c => c.CategoryCode == trainingCourse.TrainingCategory!.CategoryCode).FirstOrDefault();
+                    }
                 }
+
+
 
                 List<JobClass> jobclassList =  await _jobclassService.GetHRJobClassList();
                 TrainingProgramAndCourseViewModel trainingProgramAndCourseViewModel = new TrainingProgramAndCourseViewModel(){
