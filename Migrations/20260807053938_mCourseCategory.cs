@@ -41,53 +41,6 @@ namespace TRS.Migrations
             migrationBuilder.DropTable(
                 name: "mCourseCategory",
                 schema: "TRS");
-
-            migrationBuilder.CreateTable(
-                name: "FormAccess",
-                columns: table => new
-                {
-                    AccessType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AccessibleDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Action = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Controller = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CurrentVersion = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DateModified = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DevInfo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DevInitials = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmployeeNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FormID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FormName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Icon = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SubMenuID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SubMenuName = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserInfo",
-                columns: table => new
-                {
-                    BranchID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    BranchName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DepartmentID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DepartmentName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DisplayPic = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    EmailAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmpID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    HREmployeeStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PositionName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SectionID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SectionName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserID = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                });
         }
     }
 }
