@@ -12,8 +12,8 @@ using TRS.Data;
 namespace TRS.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20260811035453_fixTrainingCategoryRelationshipIssue")]
-    partial class fixTrainingCategoryRelationshipIssue
+    [Migration("20260812075912_CourseCategoryinTrainingCourse")]
+    partial class CourseCategoryinTrainingCourse
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -218,7 +218,6 @@ namespace TRS.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CourseCategory")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CourseDescription")
@@ -986,9 +985,7 @@ namespace TRS.Migrations
                 {
                     b.HasOne("TRS.Models.CourseCategory", "TrainingCategory")
                         .WithMany()
-                        .HasForeignKey("CourseCategory")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CourseCategory");
 
                     b.HasOne("TRS.Models.TrainingProgram", "Program")
                         .WithMany("Courses")
