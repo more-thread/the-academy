@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TRS.Migrations
 {
     /// <inheritdoc />
-    public partial class fixTrainingCategoryRelationshipIssue : Migration
+    public partial class CourseCategoryinTrainingCourse : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,8 +16,7 @@ namespace TRS.Migrations
                 schema: "TRS",
                 table: "mTrainingCourse",
                 type: "nvarchar(450)",
-                nullable: false,
-                defaultValue: "CRS-0003");
+                nullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_mTrainingCourse_CourseCategory",
@@ -32,8 +31,7 @@ namespace TRS.Migrations
                 column: "CourseCategory",
                 principalSchema: "TRS",
                 principalTable: "mCourseCategory",
-                principalColumn: "CategoryCode",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "CategoryCode");
         }
 
         /// <inheritdoc />
@@ -43,12 +41,6 @@ namespace TRS.Migrations
                 name: "FK_mTrainingCourse_mCourseCategory_CourseCategory",
                 schema: "TRS",
                 table: "mTrainingCourse");
-
-            migrationBuilder.DropTable(
-                name: "FormAccess");
-
-            migrationBuilder.DropTable(
-                name: "UserInfo");
 
             migrationBuilder.DropIndex(
                 name: "IX_mTrainingCourse_CourseCategory",

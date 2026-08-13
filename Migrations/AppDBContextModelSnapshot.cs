@@ -215,7 +215,6 @@ namespace TRS.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CourseCategory")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CourseDescription")
@@ -983,9 +982,7 @@ namespace TRS.Migrations
                 {
                     b.HasOne("TRS.Models.CourseCategory", "TrainingCategory")
                         .WithMany()
-                        .HasForeignKey("CourseCategory")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CourseCategory");
 
                     b.HasOne("TRS.Models.TrainingProgram", "Program")
                         .WithMany("Courses")
