@@ -19,16 +19,16 @@ namespace TRS.Controllers
         private readonly ITrainingScheduleService _trainingScheduleService;
         private readonly ITrainingCourseService _trainingCourseService;
         private readonly GlobalService _globalService;
-        private readonly Dictionary<string,string> auditTrail;
+        private readonly Dictionary<string, string> auditTrail;
         public TrainingProfileController(ILogger<TrainingProfileController> logger,
         ITrainingRegistrationService trainingRegistrationService,
         ITrainingScheduleService trainingScheduleService,
         ITrainingCourseService trainingCourseService,
-        IHttpContextAccessor accessor,    
+        IHttpContextAccessor accessor,
         GlobalService globalService
         )
-        {            
-            auditTrail = new Dictionary<string,string>{
+        {
+            auditTrail = new Dictionary<string, string>{
                 {"HostName", accessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString()},
                 {"UserID", accessor.HttpContext?.Session?.GetString("SessionUserID")},
                 {"LoggedEmployeeNo", accessor.HttpContext?.Session?.GetString("SessionEmployeeNo")}
@@ -64,7 +64,7 @@ namespace TRS.Controllers
                     var endDateTime = endDate + endTime;
 
                     var duration = endDateTime - startDateTime;
-                    
+
                     totalHours += duration.TotalHours;
                 }
 
@@ -91,7 +91,7 @@ namespace TRS.Controllers
                 return BadRequest(ex.Message);
                 throw;
             }
-           
+
         }
 
         public async Task<IActionResult> GetTrainingListByEmployeeNo([DataSourceRequest] DataSourceRequest request,
@@ -101,9 +101,11 @@ namespace TRS.Controllers
         {
             try
             {
-                
-                List<TrainingRegistration> _list = await _trainingRegistrationService.GetTrainingListByEmployeeNo(paramEmployeeNo??auditTrail["LoggedEmployeeNo"]);
-                
+                if (!CanViewEmployeeProfile(paramEmployeeNo))
+                    return Unauthorized();
+
+                List<TrainingRegistration> _list = await _trainingRegistrationService.GetTrainingListByEmployeeNo(paramEmployeeNo ?? auditTrail["LoggedEmployeeNo"]);
+
 
                 if (paramProgramCode != null && paramProgramCode != "ALL")
                     _list = _list.Where(w => w.TrainingSchedule.Program.ProgramCode == paramProgramCode).ToList();
@@ -111,7 +113,7 @@ namespace TRS.Controllers
                 if (paramCourseCode != null && paramCourseCode != "ALL")
                     _list = _list.Where(w => w.TrainingSchedule.Course.CourseCode == paramCourseCode).ToList();
 
-                DataSourceResult result = _list.Where(w=>w.TrainingSchedule.ScheduleStatus == "COMPLETED" && w.TrainingRegistrationStatus == "REGISTERED").OrderBy(s => s.DateCreated).ToDataSourceResult(request);
+                DataSourceResult result = _list.Where(w => w.TrainingSchedule.ScheduleStatus == "COMPLETED" && w.TrainingRegistrationStatus == "REGISTERED").OrderBy(s => s.DateCreated).ToDataSourceResult(request);
                 var res = JsonConvert.SerializeObject(result, Formatting.None,
                             new JsonSerializerSettings()
                             {
@@ -127,48 +129,77 @@ namespace TRS.Controllers
                 throw;
             }
         }
-        
-        
+
+
         public async Task<JsonResult> GetSubordinateList()
         {
-            List<VwHrEmployeeInfo> _list = _globalService.GetEmployeeList().Where(w=>w.SuperiorId.ToString() == auditTrail["LoggedEmployeeNo"] && w.EmployeeStatus == "A").ToList();          
+            long loggedEmployeeNo = Convert.ToInt64(auditTrail["LoggedEmployeeNo"]);
+
+            List<VwHrEmployeeInfo> _list = _globalService.GetEmployeeList().Where(w =>
+                (
+                w.SuperiorId == loggedEmployeeNo ||
+                w.SectionHeadId == loggedEmployeeNo ||
+                w.DepartmentHeadId == loggedEmployeeNo
+                )
+            && w.EmployeeStatus == "A").ToList();
 
             return Json(_list.OrderBy(s => s.EmployeeName));
         }
 
-        
-        public async Task<IActionResult> GetRecommendedCourseList([DataSourceRequest] DataSourceRequest request,string paramEmployeeNo = null)
+        // An employee can view their own profile, or a profile of someone whose superior,
+        // section head, or department head they are (mirrors GetSubordinateList's hierarchy).
+        private bool CanViewEmployeeProfile(string paramEmployeeNo)
+        {
+            if (string.IsNullOrEmpty(paramEmployeeNo) || paramEmployeeNo == auditTrail["LoggedEmployeeNo"])
+                return true;
+
+            long loggedEmployeeNo = Convert.ToInt64(auditTrail["LoggedEmployeeNo"]);
+            VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(paramEmployeeNo);
+
+            return _empDetails != null &&
+                (
+                _empDetails.SuperiorId == loggedEmployeeNo ||
+                _empDetails.SectionHeadId == loggedEmployeeNo ||
+                _empDetails.DepartmentHeadId == loggedEmployeeNo
+                );
+        }
+
+        public async Task<IActionResult> GetRecommendedCourseList([DataSourceRequest] DataSourceRequest request, string paramEmployeeNo = null)
         {
             try
             {
-                
-                List<TrainingRegistration> _registrationlist = await _trainingRegistrationService.GetTrainingRegistrationList();       
+                if (!CanViewEmployeeProfile(paramEmployeeNo))
+                    return Unauthorized();
+
+                List<TrainingRegistration> _registrationlist = await _trainingRegistrationService.GetTrainingRegistrationList();
                 List<TrainingCourse> _list = await _trainingCourseService.GetTrainingCourseList();
 
                 List<TrainingRegistration> _recommendedList = new();
 
-                
-                VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(paramEmployeeNo??auditTrail["LoggedEmployeeNo"]);
+
+                VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(paramEmployeeNo ?? auditTrail["LoggedEmployeeNo"]);
 
                 _list = _list.Where(w => w.Status && w.Program.JobClasses.Any(match => match.JobClassCode == _empDetails.JobClassCode)).ToList();
 
                 foreach (var item in _list)
                 {
-                    
+
                     var trainingDetails = _registrationlist.Where(w => w.TrainingSchedule.Course.CourseCode == item.CourseCode && w.EmployeeNo == _empDetails.EmployeeNo).FirstOrDefault();
                     var TrainingCompletionStatus = "";
 
-                    if(trainingDetails != null)
+                    if (trainingDetails != null)
                         TrainingCompletionStatus = trainingDetails.CourseCompletionStatus;
                     else
                         TrainingCompletionStatus = null;
-                    
-                    _recommendedList.Add( new TrainingRegistration{
-                         TrainingSchedule = new TrainingSchedule(){
+
+                    _recommendedList.Add(new TrainingRegistration
+                    {
+                        TrainingSchedule = new TrainingSchedule()
+                        {
                             Course = item,
                             Program = item.Program
-                         },
-                         CourseCompletionStatus =  TrainingCompletionStatus??"RECOMMENDED"
+                        },
+                        CourseCompletionStatus = TrainingCompletionStatus ?? "RECOMMENDED"
                     });
                 }
 
@@ -188,7 +219,7 @@ namespace TRS.Controllers
                 throw;
             }
         }
-        
+
         public IActionResult Privacy()
         {
             return View();
