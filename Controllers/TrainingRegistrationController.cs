@@ -19,13 +19,16 @@ namespace TRS.Controllers
         private readonly ITrainingRegistrationService _trainingRegistrationService;
         private readonly ITrainingScheduleService _trainingScheduleService;
         private readonly ITrainingCoordinatorService _trainingCoordinatorService;
+        private readonly ITrainingCourseService _trainingCourseService;
         private readonly GlobalService _globalService;
         private readonly IJobClassService _jobclassService;
         private readonly Dictionary<string,string> auditTrail;
+
         public TrainingRegistrationController(ILogger<TrainingRegistrationController> logger,
         ITrainingRegistrationService trainingRegistrationService,
         ITrainingScheduleService trainingScheduleService,
         ITrainingCoordinatorService trainingCoordinatorService,
+        ITrainingCourseService trainingCourseService,
         IJobClassService jobclassService,
         IHttpContextAccessor accessor,    
         GlobalService globalService
@@ -39,6 +42,7 @@ namespace TRS.Controllers
             _trainingScheduleService = trainingScheduleService;
             _trainingCoordinatorService = trainingCoordinatorService;
             _globalService = globalService;
+            _trainingCourseService = trainingCourseService;
             _logger = logger;         
             _jobclassService = jobclassService;   
             _trainingRegistrationService = trainingRegistrationService;     
@@ -102,6 +106,21 @@ namespace TRS.Controllers
                 throw;
             }
         }      
+
+        public async Task<IActionResult> GetTrainingCategoryByCourseCode(string paramCategoryCode)
+        {
+            try
+            {
+                var trainingCourse = _trainingCourseService.GetTrainingCourseByCode(paramCategoryCode);
+                throw new NotImplementedException();
+            }
+            catch (Exception ex)
+            {
+                _globalService.Log($"Error: {RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail, ex);
+                return BadRequest(ex.Message);
+                throw;
+            }
+        }
         
         [HttpGet]
         public IActionResult GetTrainingRegistrationConfirmationWindow()
@@ -328,6 +347,30 @@ namespace TRS.Controllers
                 }else
                     _trainingSchedule.RegistrationStatus = "OPEN";
 
+                //Email sending
+                VwHrEmployeeInfo _empDetails = _globalService.GetHREmployeeInfoByEmployeeNo(_trainingRegistration.EmployeeNo);
+                var superiorEmail = _globalService.GetHREmployeeInfoByEmployeeNo(_empDetails.SuperiorId.ToString()).EmailAddress;
+                var _coordinatorList = await _trainingCoordinatorService.GetTrainingCoordinatorList();
+                var coordinatorEmails = _globalService.GetEmployeeList()
+                                        .Join(_coordinatorList,
+                                            e => e.EmployeeNo,
+                                            c => c.EmployeeNo,
+                                            (e, c) => e.EmailAddress)
+                                        .ToList();
+
+                var toRecipient = string.Join(";", coordinatorEmails);
+                var copyRecipient = superiorEmail+";"+_empDetails.EmailAddress;
+
+                var template = EmailTemplates.Get("RegistrationCancellation");
+
+                var html = EmailTemplates.FillTemplate(template.HtmlBody, new Dictionary<string, string>
+                {
+                    ["EmployeeName"] = _empDetails.EmployeeName,
+                    ["TrainingCode"] = paramCode,
+                    ["CourseTitle"] = _trainingSchedule.Course.CourseTitle
+                });
+
+                _globalService.SendEmail(html, template.Subject, toRecipient, copyRecipient, null);
                 _trainingRegistrationService.UpdateRegistration();
 
                 _globalService.Log($"Cancel registration: TrainingRegistration ({paramCode})", auditTrail, null);

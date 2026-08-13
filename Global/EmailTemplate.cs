@@ -68,6 +68,11 @@
                 "This is to inform you that your registration to this training, <b>{TrainingCode} - {CourseTitle}</b> has been rejected due to this reason: {Reason}.<br><br>" +
                 "Please login to the <a href=\"https://hrgateway.universalleaf.com.ph\">Training Registrar System</a> to view the details of your training and registrations.</p>"
             ),
+            ["RegistrationCancellation"] = new EmailTemplate(
+                "Training - Registration Cancelled",
+                "<p>Dear Ma'am/Sir,<br><br>" +
+                "This is to inform you that {EmployeeName} has cancelled his/her registration, {TrainingCode} - {CourseTitle}.<br><br>"
+            ),
             ["ScheduleReminder"] = new EmailTemplate(
                 "Training - Schedule Reminder",
                 "<p>Dear Ma'am/Sir,<br><br>" +
