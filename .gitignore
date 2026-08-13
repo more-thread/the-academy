@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Ignore appsettings files that may contain sensitive configuration (local secrets, connection strings)
+# If you only want to ignore the project root file(s) use a single leading slash: /appsettings.json
+**/appsettings.json
+**/appsettings.*.json
