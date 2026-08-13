@@ -6,8 +6,8 @@ namespace TRS.Interfaces
     {
         Task<TrainingProgram> GetTrainingProgramByCode(string code);
         Task<List<TrainingProgram>> GetTrainingProgramList();
+        Task<List<CourseCategory>> GetCourseCategoriesList();
         bool AddProgram(TrainingProgram model);
         bool UpdateProgram();
-        
     }
 }

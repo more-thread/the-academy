@@ -35,5 +35,13 @@ namespace TRS.Services
         {       
             return _context.SaveChanges() > 0;
         }
-    }   
+
+        public async Task<List<CourseCategory>> GetCourseCategoriesList()
+        {
+            // Return only categories that are tagged as active (Status == true)
+            return await _context.mCourseCategory
+                                 .Where(c => c.Status) // filter active records
+                                 .ToListAsync();
+        }
+    }
 }

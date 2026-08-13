@@ -9,5 +9,6 @@ namespace TRS.ViewModels{
         public TrainingCourse? TrainingCourse { get; set; }
         public List<JobClass> JobClasses {get;set;}
         public FormControlModel? FormControl { get; set; }
+        public CourseCategory? CourseCategory { get; set; }
     }
 }
