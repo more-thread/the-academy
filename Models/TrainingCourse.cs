@@ -16,6 +16,8 @@ namespace TRS.Models
         public string CourseTitle { get; set; }
         [Required]
         public string CourseDescription { get; set; }
+        [Required]
+        public string CategoryCode { get; set; }
         public bool WithPreTest { get; set; }
         public Int64? PreTestTotalScore { get; set; }
         public bool WithPostTest { get; set; }

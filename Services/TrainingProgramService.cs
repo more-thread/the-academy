@@ -35,5 +35,11 @@ namespace TRS.Services
         {       
             return _context.SaveChanges() > 0;
         }
+
+        public async Task<List<CourseCategory>> GetCourseCategoriesList()
+        {
+            var result = _context.mCourseCategory.ToListAsync();
+            return await result;
+        }
     }   
 }
