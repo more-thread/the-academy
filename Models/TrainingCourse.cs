@@ -33,6 +33,10 @@ namespace TRS.Models
         [JsonIgnore] 
         [Required]
         public TrainingProgram Program { get; set; }
+        [ForeignKey(nameof(CourseCategory))]
+        [JsonIgnore]
+        [Required]
+        public CourseCategory TrainingCategory { get; set; }
 
         [NotMapped]
         public string FormattedWithEvaluation

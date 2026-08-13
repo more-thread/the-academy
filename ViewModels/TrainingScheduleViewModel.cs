@@ -8,6 +8,7 @@ namespace TRS.ViewModels{
         public List<TrainingProgram>? TrainingProgramList { get; set; }
         public TrainingProgram? TrainingProgramDetails { get; set; }
         public TrainingCourse? TrainingCourseDetails { get; set; }
+        public CourseCategory? TrainingCategory { get; set; } //the setted training category on the maintainance
         
         public List<TrainingCourse> TrainingCourseList { get; set; }
         public List<JobClass> JobClasses {get;set;}

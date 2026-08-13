@@ -71,7 +71,7 @@ namespace TRS.Controllers
                 TraineeRegistrationViewModel trainingScheduleViewModel = new TraineeRegistrationViewModel(){                
                     JobClasses = jobclassList,
                     TrainingScheduleDetails = trainingSchedule ?? null,
-                    TraineeList = _list.Where(w => w.TrainingRegistrationStatus == "REGISTERED" || w.TrainingRegistrationStatus == "FOR CONFIRMATION").OrderBy(s => s.EmployeeInfo.EmployeeName).ToList()
+                    TraineeList = _list.Where(w => w.TrainingRegistrationStatus == "REGISTERED" || w.TrainingRegistrationStatus == "FOR CONFIRMATION").OrderBy(s => s.RegistrationCode).ToList()
                 };                                           
                 
                 return PartialView("~/Views/TrainingRegistrationConfirmation/_TrainingRegistrationConfirmationDetails.cshtml", trainingScheduleViewModel);
@@ -88,9 +88,9 @@ namespace TRS.Controllers
         {
             try
             {
-                List<TrainingRegistration> _list = await _trainingRegistrationService.GetTrainingRegistrationList();
+                List<TrainingRegistration> _list = await _trainingRegistrationService.GetTraineeListByCode(code);
 
-                DataSourceResult result = _list.Where(w=> w.TrainingSchedule.TrainingCode == code && ( w.TrainingRegistrationStatus == "REGISTERED" || w.TrainingRegistrationStatus == "FOR CONFIRMATION")).OrderBy(s => s.DateCreated).ToDataSourceResult(request);
+                DataSourceResult result = _list.Where(w=> ( w.TrainingRegistrationStatus == "REGISTERED" || w.TrainingRegistrationStatus == "FOR CONFIRMATION")).OrderBy(s => s.RegistrationCode).ToDataSourceResult(request);
                 var res = JsonConvert.SerializeObject(result, Formatting.None,
                             new JsonSerializerSettings()
                             {
