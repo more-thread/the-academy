@@ -8,6 +8,7 @@ using TRS.Attributes;
 using TRS.Global;
 using TRS.Interfaces;
 using TRS.Models;
+using TRS.Services;
 using TRS.ViewModels;
 
 namespace TRS.Controllers
@@ -19,6 +20,7 @@ namespace TRS.Controllers
         private readonly ITrainingRegistrationService _trainingRegistrationService;
         private readonly ITrainingScheduleService _trainingScheduleService;
         private readonly ITrainingCoordinatorService _trainingCoordinatorService;
+        private readonly ITrainingCourseService _trainingCourseService;
         private readonly GlobalService _globalService;
         private readonly IJobClassService _jobclassService;
         private Dictionary<string,string> auditTrail;
@@ -27,6 +29,7 @@ namespace TRS.Controllers
         ITrainingRegistrationService trainingRegistrationService,
         ITrainingScheduleService trainingScheduleService,
         ITrainingCoordinatorService trainingCoordinatorService,
+        ITrainingCourseService trainingCourseService,
         IJobClassService jobclassService,
         IHttpContextAccessor accessor,
         GlobalService globalService
@@ -45,6 +48,7 @@ namespace TRS.Controllers
             _logger = logger;         
             _jobclassService = jobclassService;   
             _trainingRegistrationService = trainingRegistrationService;
+            _trainingCourseService = trainingCourseService;
         }
         [ValidateAccess(ControllerName = "TraineeRegistration")]
         public IActionResult Index()
@@ -57,10 +61,11 @@ namespace TRS.Controllers
         public async Task<IActionResult> GetTraineeRegistrationWindow(string code)
         {
             try
-            {            
+            {
                 List<JobClass> jobclassList =  await _jobclassService.GetHRJobClassList();                
                 TrainingSchedule trainingSchedule = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(code);
-                List<TrainingRegistration> _list = await _trainingRegistrationService.GetTraineeListByCode(trainingSchedule.TrainingCode);                
+                List<TrainingRegistration> _list = await _trainingRegistrationService.GetTraineeListByCode(trainingSchedule.TrainingCode);
+                TrainingCourse trainingCourse = await _trainingCourseService.GetTrainingCourseByCode(trainingSchedule.Course.CourseCode);
 
                 TraineeRegistrationViewModel trainingScheduleViewModel = new TraineeRegistrationViewModel(){                
                     JobClasses = jobclassList,
@@ -68,7 +73,8 @@ namespace TRS.Controllers
                     TraineeList = _list.Where(w => w.TrainingRegistrationStatus == "REGISTERED" 
                     || w.TrainingRegistrationStatus == "FOR CONFIRMATION"
                     || w.TrainingRegistrationStatus == "SCHEDULE FOR CONFIRMATION"
-                    || w.TrainingRegistrationStatus == "FOR APPROVAL").OrderBy(s => s.EmployeeInfo.EmployeeName).ToList()
+                    || w.TrainingRegistrationStatus == "FOR APPROVAL").OrderBy(s => s.EmployeeInfo.EmployeeName).ToList(),
+                    TrainingCourseDetails = trainingCourse ?? null
                 };
                 
                 return PartialView("~/Views/TraineeRegistration/_TraineeRegistrationDetails.cshtml", trainingScheduleViewModel);
@@ -390,7 +396,7 @@ namespace TRS.Controllers
                 var workSheet = package.Workbook.Worksheets.Add("Trainees");
 
                 var headerTitles = new List<string>() { "EMPLOYEE NO.", "EMPLOYEE NAME", "POSITION", "DEPARTMENT", "SUPERIOR", "EMAIL ADDRESS", "CONTACT NO.", 
-                                                        "TRAINING COMPLETION STATUS", "TRAINING REGISTRATION STATUS", "REGISTERED BY", "REGISTERED DATE AND TIME" };
+                                                        "TRAINING COMPLETION STATUS", "TRAINING REGISTRATION STATUS", "ENROLLMENT TYPE", "REGISTERED BY", "REGISTERED DATE AND TIME"  };
 
                 //file info and column headers 
                 workSheet.Cells[1, 1].Value = "Program & Course: " + _schedule.Program.ProgramTitle + " - " + _schedule.Course.CourseTitle;
@@ -416,6 +422,7 @@ namespace TRS.Controllers
                     var nextRow = lastRow + 1;
                     var employeeInfo = attendee.EmployeeInfo;
 
+
                     workSheet.Cells[nextRow, 1].Value = employeeInfo.EmployeeNo;
                     workSheet.Cells[nextRow, 2].Value = employeeInfo.EmployeeName;
                     workSheet.Cells[nextRow, 3].Value = employeeInfo.PositionName;
@@ -425,8 +432,9 @@ namespace TRS.Controllers
                     workSheet.Cells[nextRow, 7].Value = employeeInfo.PersonalPhoneNo;
                     workSheet.Cells[nextRow, 8].Value = attendee.TrainingCompletionStatus;
                     workSheet.Cells[nextRow, 9].Value = attendee.TrainingRegistrationStatus;
-                    workSheet.Cells[nextRow, 10].Value = attendee.RegistrationCreatedBy;
-                    workSheet.Cells[nextRow, 11].Value = attendee.RegistrationCreatedDate?.ToString("yyyy/MM/dd hh:mm tt");
+                    workSheet.Cells[nextRow, 10].Value = employeeInfo.UserID == attendee.RegistrationCreatedBy ? "SELF-ENROLL" : "NOMINATED";
+                    workSheet.Cells[nextRow, 11].Value = attendee.RegistrationCreatedBy;
+                    workSheet.Cells[nextRow, 12].Value = attendee.RegistrationCreatedDate?.ToString("yyyy/MM/dd hh:mm tt");
 
                     lastRow++;
                 }

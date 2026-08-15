@@ -7,6 +7,8 @@ public partial class VwHrEmployeeInfo
 {
     public string EmployeeNo { get; set; }
 
+    public string UserID { get; set; }
+
     public string EmployeeName { get; set; }
 
     public string FirstName { get; set; }
