@@ -480,7 +480,42 @@ namespace TRS.Controllers
             });
         }
 
-        [HttpPost]        
+        [HttpPost]
+        public async Task<ActionResult> UpdateRegistrationStatus(string paramCode, string paramRegistrationStatus)
+        {
+            try
+            {
+                if (paramRegistrationStatus != "OPEN" && paramRegistrationStatus != "CLOSED")
+                    return BadRequest("Invalid Registration Status.");
+
+                TrainingSchedule _details = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramCode);
+
+                if (_details == null)
+                    return BadRequest("Training schedule not found.");
+
+                if (_details.IsRegistrationAutoClosed)
+                    return BadRequest("Registration Status is system-controlled and can no longer be modified.");
+
+                var _logMsg = $"Change in Registration Status: TrainingSchedule ({paramCode}) - from: '{_details.RegistrationStatus}' to: '{paramRegistrationStatus}'.";
+
+                _details.RegistrationStatus = paramRegistrationStatus;
+                _details.ScheduleModifiedBy = auditTrail["UserID"];
+                _details.ScheduleModifiedDate = _globalService.GetDateTime();
+
+                _trainingScheduleService.UpdateSchedule();
+
+                _globalService.Log(_logMsg, auditTrail, null);
+            }
+            catch (System.Exception ex)
+            {
+                _globalService.Log($"Error: {RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail, ex);
+                return BadRequest(ex.Message);
+            }
+
+            return Ok();
+        }
+
+        [HttpPost]
         public async Task<ActionResult> CancelSchedule(string paramCode, string paramReason, string paramCancellationType)
         {
             try

@@ -18,31 +18,61 @@ namespace TRS.Services
         {
             try
             {
-                var result = _context.tTrainingSchedule.Where(w => w.TrainingCode == code)
+                var result = await _context.tTrainingSchedule.Where(w => w.TrainingCode == code)
                         .Include(c=>c.AdditionalJobClasses)
                         .Include(c => c.Program)
                         .Include(c => c.Program.JobClasses)
                         .Include(c => c.Course)
                         .FirstOrDefaultAsync();
-                return await result;    
+
+                if (ApplyAutoCloseRegistrationStatus(result))
+                    _context.SaveChanges();
+
+                return result;
             }
             catch (System.Exception)
             {
-                
+
                 throw;
             }
-            
+
         }
-        
+
         public async Task<List<TrainingSchedule>> GetTrainingScheduleList()
-        {             
-            var result = _context.tTrainingSchedule
+        {
+            var result = await _context.tTrainingSchedule
                         .Include(c => c.AdditionalJobClasses)
                         .Include(c => c.Program)
                         .Include(c => c.Program.JobClasses)
                         .Include(c => c.Course)
-                        .ToListAsync();            
-            return await result;
+                        .ToListAsync();
+
+            var hasChanges = false;
+            foreach (var schedule in result)
+            {
+                if (ApplyAutoCloseRegistrationStatus(schedule))
+                    hasChanges = true;
+            }
+            if (hasChanges)
+                _context.SaveChanges();
+
+            return result;
+        }
+
+        //- Auto-close the Registration Status once Confirmed Participants reaches Class Size, the Start Date has
+        //  been reached, or the schedule is canceled. Evaluated on every fetch since there is no background scheduler.
+        private bool ApplyAutoCloseRegistrationStatus(TrainingSchedule schedule)
+        {
+            if (schedule == null || schedule.ScheduleStatus != "AVAILABLE")
+                return false;
+
+            if (schedule.IsRegistrationAutoClosed && schedule.RegistrationStatus != "CLOSED")
+            {
+                schedule.RegistrationStatus = "CLOSED";
+                return true;
+            }
+
+            return false;
         }
         public async Task<List<VwHrRegion>> GetHRRegionList()
         {             

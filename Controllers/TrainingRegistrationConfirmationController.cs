@@ -199,9 +199,9 @@ namespace TRS.Controllers
                     if(_trainingRegistration.TrainingRegistrationStatus == "REGISTERED")
                         _trainingSchedule.RegisteredEmployeeCount -= 1;
 
-                    if(_trainingSchedule.RegisteredEmployeeCount != _trainingSchedule.ClassSize)
+                    if(_trainingSchedule.RegisteredEmployeeCount != _trainingSchedule.ClassSize && !_trainingSchedule.IsRegistrationAutoClosed)
                         _trainingSchedule.RegistrationStatus = "OPEN";
-                        
+
                     _trainingRegistration.TrainingRegistrationStatus = "REJECTED";
                     _trainingRegistration.RegistrationRejectedBy = auditTrail["UserID"];
                     _trainingRegistration.RegistrationRejectedDate = _globalService.GetDateTime();  
@@ -276,9 +276,9 @@ namespace TRS.Controllers
                         if(_trainingRegistration.TrainingRegistrationStatus == "REGISTERED")
                             _trainingSchedule.RegisteredEmployeeCount -= 1;
 
-                        if(_trainingSchedule.RegisteredEmployeeCount != _trainingSchedule.ClassSize)
+                        if(_trainingSchedule.RegisteredEmployeeCount != _trainingSchedule.ClassSize && !_trainingSchedule.IsRegistrationAutoClosed)
                             _trainingSchedule.RegistrationStatus = "OPEN";
-                            
+
                         _trainingRegistration.TrainingRegistrationStatus = "REJECTED";
                         _trainingRegistration.RegistrationRejectedBy = auditTrail["UserID"];
                         _trainingRegistration.RegistrationRejectedDate = _globalService.GetDateTime();                 

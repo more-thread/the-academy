@@ -344,7 +344,7 @@ namespace TRS.Controllers
                 if(_trainingSchedule.RegisteredEmployeeCount == _trainingSchedule.ClassSize)
                 {
                     _trainingSchedule.RegistrationStatus = "CLOSED";
-                }else
+                }else if(!_trainingSchedule.IsRegistrationAutoClosed)
                     _trainingSchedule.RegistrationStatus = "OPEN";
 
                 //Email sending
