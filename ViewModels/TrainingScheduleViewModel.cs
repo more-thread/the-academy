@@ -15,5 +15,6 @@ namespace TRS.ViewModels{
         public List<VwHrRegion>? RegionList { get; set; }
         public FormControlModel? FormControl { get; set; }
         public CalendarActivity? CalendarActivity { get; set; }
+        public bool IsRegistrationStatusLocked { get; set; } //true if the Registration Status was auto-closed by the system and should not be editable
     }
 }

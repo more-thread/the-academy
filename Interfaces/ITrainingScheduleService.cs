@@ -9,6 +9,7 @@ namespace TRS.Interfaces
         Task<List<VwHrRegion>> GetHRRegionList();
         bool AddSchedule(TrainingSchedule model);
         bool UpdateSchedule();
-        
+        bool IsRegistrationAutoCloseConditionMet(TrainingSchedule schedule, DateTime currentDate);
+
     }
 }

@@ -75,10 +75,11 @@ namespace TRS.Controllers
                 FormControlModel formControlModel = new FormControlModel(control);
 
                 TrainingScheduleViewModel trainingScheduleViewModel = new TrainingScheduleViewModel(){
-                    FormControl = formControlModel,                    
+                    FormControl = formControlModel,
                     TrainingScheduleDetails = trainingSchedule ?? null,
                     JobClasses = jobclassList,
-                    TrainingCourseDetails = trainingCourse ?? null
+                    TrainingCourseDetails = trainingCourse ?? null,
+                    IsRegistrationStatusLocked = trainingSchedule != null && _trainingScheduleService.IsRegistrationAutoCloseConditionMet(trainingSchedule, _globalService.GetDateTime())
                 };
                 
                 return PartialView("~/Views/Shared/_TrainingScheduleDetails.cshtml", trainingScheduleViewModel);
@@ -480,7 +481,43 @@ namespace TRS.Controllers
             });
         }
 
-        [HttpPost]        
+        [HttpPost]
+        public async Task<ActionResult> UpdateRegistrationStatus(string paramCode, string paramStatus)
+        {
+            try
+            {
+                if (paramStatus != "OPEN" && paramStatus != "CLOSED")
+                    return BadRequest("Invalid registration status.");
+
+                TrainingSchedule _details = await _trainingScheduleService.GetTrainingScheduleDetailsByCode(paramCode);
+
+                if (_details == null)
+                    return BadRequest("Training schedule not found.");
+
+                if (_trainingScheduleService.IsRegistrationAutoCloseConditionMet(_details, _globalService.GetDateTime()))
+                    return BadRequest("Registration status cannot be changed for this training schedule.");
+
+                var _logMsg = $"Change in registration status: TrainingSchedule ({_details.TrainingCode}) - from: '{_details.RegistrationStatus}' to: '{paramStatus}'.";
+
+                _details.RegistrationStatus = paramStatus;
+                _details.ScheduleModifiedBy = auditTrail["UserID"];
+                _details.ScheduleModifiedDate = _globalService.GetDateTime();
+
+                _trainingScheduleService.UpdateSchedule();
+
+                _globalService.Log(_logMsg, auditTrail, null);
+            }
+            catch (System.Exception ex)
+            {
+                _globalService.Log($"Error: {RouteData.Values["controller"]}/{RouteData.Values["action"]}", auditTrail, ex);
+                return BadRequest(ex.Message);
+            }
+
+            // Return success response
+            return Ok();
+        }
+
+        [HttpPost]
         public async Task<ActionResult> CancelSchedule(string paramCode, string paramReason, string paramCancellationType)
         {
             try
