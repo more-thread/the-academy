@@ -35,7 +35,6 @@ namespace TRS.Models
         public TrainingProgram Program { get; set; }
         [ForeignKey(nameof(CourseCategory))]
         [JsonIgnore]
-        [Required]
         public CourseCategory TrainingCategory { get; set; }
 
         [NotMapped]

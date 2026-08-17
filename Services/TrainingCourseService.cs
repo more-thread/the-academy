@@ -21,7 +21,7 @@ namespace TRS.Services
 
         public async Task<List<TrainingCourse>> GetTrainingCourseList()
         {
-            var result = _context.mTrainingCourse.Include(c => c.Program.JobClasses).Include(c => c.Program).ToListAsync();            
+            var result = _context.mTrainingCourse.Include(c => c.Program.JobClasses).Include(c => c.Program).Include(c => c.TrainingCategory).ToListAsync();            
             return await result;
         }
         public bool AddCourse(TrainingCourse model)

@@ -321,17 +321,26 @@
         
         <div class="form-group row">
             <label class="col-sm-4 col-form-label">Registration Status:</label>
-            <div class="col-sm-8">
-                @* <input type="text" class="form-control" disabled placeholder="System-generated" value="@Model.TrainingScheduleDetails?.RegistrationStatus"> *@
-                @(Html.Kendo().TextBox()
-                    .Enable(false)
-                    .Name("txt_RegistrationStatus")                    
-                    .Value(@Model.TrainingScheduleDetails?.RegistrationStatus)
+            <div class="col-sm-6">
+                @{
+                    var _currentRegistrationStatus = Model.TrainingScheduleDetails?.RegistrationStatus;
+                    var _isRegistrationAutoClosed = Model.TrainingScheduleDetails?.IsRegistrationAutoClosed ?? true;
+                    var _oppositeRegistrationStatus = _currentRegistrationStatus == "OPEN" ? "CLOSED" : "OPEN";
+                }
+                @(Html.Kendo().DropDownList()
+                    .Name("dd_RegistrationStatus")
+                    .OptionLabel(_currentRegistrationStatus ?? "")
+                    .Enable(Model.FormControl.FormMode == "Edit" && !_isRegistrationAutoClosed)
+                    .BindTo(new List<string>() { _oppositeRegistrationStatus })
+                    .Events(e => e.Change("dd_RegistrationStatus_OnChange"))
                 )
+            </div>
+            <div class="col-sm-2">
+                <button type="button" id="btn_saveRegistrationStatus" class="btn btn-sm btn-info" style="display:none;" onclick="SaveRegistrationStatus()">Save</button>
             </div>
         </div>
     </div>
-    
+
 </div>
 
 @{
@@ -489,7 +498,56 @@
             }
         )
 
-        
+
+    }//end of function
+
+    function dd_RegistrationStatus_OnChange(e){
+        var _newValue = e.sender.value();
+        if (_newValue && _newValue !== "") {
+            $("#btn_saveRegistrationStatus").show();
+        } else {
+            $("#btn_saveRegistrationStatus").hide();
+        }
+    }
+
+    async function SaveRegistrationStatus(){
+        var _newStatus = $("#dd_RegistrationStatus").data("kendoDropDownList").value();
+        var _trainingCode = $("#txt_TrainingCode").val();
+
+        if (!_newStatus || _newStatus === "") {
+            return;
+        }
+
+        const result = await $mong.kendoConfirmationDialog("Are you sure you want to update the Registration Status?");
+
+        if (result !== true) {
+            return;
+        }
+
+        $.post('@Url.Action("UpdateRegistrationStatus", "TrainingSchedule")', {paramCode: _trainingCode, paramStatus: _newStatus})
+        .fail(
+            function (res){
+                $mong.kendoAlertInfo(res.responseText);
+                return
+            }
+        )
+        .done(
+            function(){
+                $("#window_details").data("kendoWindow").close();
+                var grid = $("#grid_trainingScheduleList").data("kendoGrid");
+
+                var scheduler = $("#scheduler_trainingSchedule").data("kendoScheduler");
+                scheduler.refresh();
+                scheduler.dataSource.read();
+
+                grid.dataSource.read().then(function () {
+                    grid.refresh();
+                });
+
+                $mong.kendoAlertInfo("Registration Status successfully updated.");
+                return
+            }
+        )
     }//end of function
 
 </script>

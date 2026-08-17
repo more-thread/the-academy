@@ -76,7 +76,9 @@ namespace TRS.Services
         public async Task<List<TrainingRegistration>> GetTraineeListByCode(string code)
         {                       
             var result = _context.tTrainingRegistration.Where(w => w.TrainingSchedule.TrainingCode == code)
-            .Join(_context.VwHrEmployeeInfos, tc => tc.EmployeeNo, ei => ei.EmployeeNo, (tc, ei) => new TrainingRegistration
+            .Join(_context.VwHrEmployeeInfos, 
+                    tc => tc.EmployeeNo, ei => ei.EmployeeNo,
+                    (tc, ei) => new TrainingRegistration
             {   
                 TrainingRegistrationStatus = tc.TrainingRegistrationStatus,
                 TrainingCompletionStatus = tc.TrainingCompletionStatus,
