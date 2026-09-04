@@ -1,20 +1,24 @@
-# Azure DevOps pipeline: build the TRS ASP.NET Core app and publish it to IIS.
+# Azure DevOps pipeline: build the TRS ASP.NET Core app and publish it to an
+# EXISTING IIS site on server IS-VBOXX02.
+#
+# The "TRS" website, its "TRS" application pool (running under a custom domain
+# identity), and the https binding (10.101.50.150:88 with an SSL certificate)
+# already exist on the server and are managed by hand. This pipeline therefore
+# does NOT create or reconfigure the site, app pool, identity, or bindings — it
+# only pushes new app files into the existing site with Web Deploy (msdeploy).
 #
 # Stage 1 (Build) runs on a Microsoft-hosted Windows agent: it restores,
-# builds, publishes the app and produces a Web Deploy (.zip) package that is
-# saved as a pipeline artifact.
+# builds, publishes the app and produces a Web Deploy (.zip) package saved as a
+# pipeline artifact.
 #
 # Stage 2 (Deploy) runs on a Windows deployment group that contains the IIS
-# server(s). It downloads the package and uses the IIS Web App Manage / Deploy
-# tasks to create-or-update the app pool + website and push the package with
-# Web Deploy (msdeploy). The deployment-group agent must be installed on the
-# target machine(s) with the "IIS" tag.
+# server. It downloads the package and deploys it into the existing "TRS" site.
+# The deployment-group agent must be installed on IS-VBOXX02 with the "IIS" tag.
 #
 # One-time setup on the IIS server:
-#   * Install the ASP.NET Core Hosting Bundle (matching the target framework).
+#   * Install the ASP.NET Core 7 Hosting Bundle (if not already present).
 #   * Install Web Deploy 3.6+ (required by the IIS Web App Deploy task).
-#   * Register the machine in the Azure DevOps deployment group named below
-#     and give it the tag "IIS".
+#   * Register the machine in the Azure DevOps deployment group named below.
 #
 # Override the variables below (or set them in the pipeline UI / a variable
 # group) to match your environment.
@@ -30,15 +34,10 @@ variables:
   dotnetVersion: '7.0.x'
   # Path to the project to publish.
   projectPath: 'TRS.csproj'
-  # --- IIS deployment settings (override for your server) ---
+  # --- IIS deployment settings ---
   deploymentGroupName: 'iis-servers'
+  # Name of the EXISTING IIS website to deploy into (as shown in IIS Manager).
   iisWebsiteName: 'TRS'
-  iisAppPoolName: 'TRS'
-  # Physical folder on the IIS server that the website maps to.
-  iisPhysicalPath: '%SystemDrive%\inetpub\wwwroot\TRS'
-  # Binding for the site (adjust protocol/port/host as needed).
-  iisBindProtocol: 'http'
-  iisBindPort: '80'
 
 stages:
   - stage: Build
@@ -90,11 +89,11 @@ stages:
     condition: succeeded()
     jobs:
       - deployment: DeployIIS
-        displayName: 'Deploy to IIS server'
+        displayName: 'Deploy to existing TRS site'
         environment:
           name: 'production'
           resourceType: VirtualMachine
-        # Target the Windows deployment group machines tagged "IIS".
+        # Target the Windows deployment group machines that host IIS.
         pool:
           name: '$(deploymentGroupName)'
         strategy:
@@ -111,41 +110,16 @@ stages:
                     artifactName: 'drop'
                     downloadPath: '$(System.ArtifactsDirectory)'
 
-                - task: IISWebAppManagementOnMachineGroup@0
-                  displayName: 'Create/Update IIS website & app pool'
-                  inputs:
-                    enableIIS: true
-                    IISDeploymentType: 'IISWebsite'
-                    ActionIISWebsite: 'CreateOrUpdateWebsite'
-                    WebsiteName: '$(iisWebsiteName)'
-                    WebsitePhysicalPath: '$(iisPhysicalPath)'
-                    WebsitePhysicalPathAuth: 'WebsiteUserPassThrough'
-                    AddBinding: true
-                    Bindings: |
-                      {
-                        "bindings": [
-                          {
-                            "protocol": "$(iisBindProtocol)",
-                            "ipAddress": "*",
-                            "port": "$(iisBindPort)",
-                            "hostname": "",
-                            "sslThumbprint": "",
-                            "sniFlag": false
-                          }
-                        ]
-                      }
-                    CreateOrUpdateAppPoolForWebsite: true
-                    AppPoolNameForWebsite: '$(iisAppPoolName)'
-                    # ASP.NET Core runs out-of-process behind the ANCM module,
-                    # so the app pool uses the "No Managed Code" runtime.
-                    DotNetVersionForWebsite: 'No Managed Code'
-                    PipeLineModeForWebsite: 'Integrated'
-                    AppPoolIdentityForWebsite: 'ApplicationPoolIdentity'
-
+                # Deploy into the existing "TRS" site. No site/app-pool/binding
+                # management here, so the custom app-pool identity, the
+                # https:88 binding and the SSL certificate are left untouched.
                 - task: IISWebAppDeploymentOnMachineGroup@0
                   displayName: 'Deploy package with Web Deploy'
                   inputs:
                     WebSiteName: '$(iisWebsiteName)'
                     Package: '$(System.ArtifactsDirectory)/drop/*.zip'
-                    RemoveAdditionalFilesFlag: true
+                    # Keep appsettings/other in-place config from being wiped;
+                    # flip to true only if you want an exact mirror of the build.
+                    RemoveAdditionalFilesFlag: false
+                    # Stop the app during copy to avoid locked-DLL failures.
                     TakeAppOfflineFlag: true
