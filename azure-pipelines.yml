@@ -105,9 +105,12 @@ steps:
         try {
           # Copy/overwrite published files. No /MIR, so server-specific files
           # already on the box (e.g. an environment appsettings.json) are kept.
-          # robocopy exit codes 0-7 mean success; 8+ is a real error.
+          # robocopy uses a bitmask exit code: 0-7 = success (1=copied,
+          # 2=extras, etc.), 8+ = a real failure.
           robocopy $src $dest /E /R:3 /W:5 /NFL /NDL /NP
-          if ($LASTEXITCODE -ge 8) { throw "robocopy failed with code $LASTEXITCODE" }
+          $rc = $LASTEXITCODE
+          if ($rc -ge 8) { throw "robocopy failed with code $rc" }
+          Write-Host "robocopy completed (exit code $rc = success)."
         }
         finally {
           Write-Host "Starting app pool '$appPool'..."
@@ -115,3 +118,6 @@ steps:
         }
 
         Write-Host "Deployment complete."
+        # robocopy left a non-zero (but successful) exit code; reset it so the
+        # PowerShell task does not treat the step as failed.
+        exit 0
