@@ -292,12 +292,20 @@ const darkVars={background:"#171c27",primaryColor:"#222a3a",primaryBorderColor:"
 function currentTheme(){const s=document.documentElement.getAttribute("data-theme");
   return s||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}
 let seq=0;
+let fontsReady=false;
 async function renderAll(){
   if(typeof mermaid==="undefined")return;
+  // Mermaid measures label text to size each node, so the web font must be
+  // loaded first — otherwise boxes are sized for the fallback font and the
+  // (wider) IBM Plex text overflows/clips once it swaps in.
+  if(!fontsReady){
+    try{ if(document.fonts&&document.fonts.ready){ await document.fonts.ready; } }catch(e){}
+    fontsReady=true;
+  }
   const dark=currentTheme()==="dark";
   mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",
     fontFamily:"'IBM Plex Sans', sans-serif",themeVariables:dark?darkVars:lightVars,
-    flowchart:{curve:"basis",htmlLabels:true,padding:14,nodeSpacing:44,rankSpacing:52}});
+    flowchart:{curve:"basis",htmlLabels:true,padding:14,nodeSpacing:44,rankSpacing:52,wrappingWidth:360}});
   for(const el of document.querySelectorAll(".mermaid")){
     const key=el.getAttribute("data-src");
     try{const {svg}=await mermaid.render("m-"+key+"-"+(seq++),SRC[key]);el.innerHTML=svg;}
