@@ -1,0 +1,123 @@
+# Azure DevOps (Server / on-prem) pipeline: build the TRS ASP.NET Core app and
+# publish it into the EXISTING IIS site on IS-VBOXX02.
+#
+# The self-hosted agent "QA_VBOX" (pool: agent_pool_jsr) runs ON the IIS server
+# itself, so build and deploy happen on the same machine. That means there is
+# no need for a deployment group, artifact download, Web Deploy/msdeploy, or any
+# marketplace extension — the deploy step copies the freshly published files
+# straight into the existing site's physical folder using the IIS PowerShell
+# module that ships with IIS.
+#
+# The "TRS" website and "TRS" application pool (custom domain identity, https:88
+# binding, SSL cert) already exist and are managed by hand; this pipeline does
+# NOT touch that configuration. It only stops the app pool, refreshes the files,
+# and starts it again.
+#
+# Requirements on the agent (IS-VBOXX02):
+#   * .NET 7 SDK, or leave the UseDotNet@2 task to install it at runtime.
+#   * The agent service account must be a local administrator (needed to stop/
+#     start the app pool and write to the site folder).
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+# Run everything on the self-hosted agent that lives on the IIS server.
+pool:
+  name: 'agent_pool_jsr'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '7.0.x'
+  projectPath: 'TRS.csproj'
+  publishDir: '$(Build.ArtifactStagingDirectory)\site'
+  # Local folder on the server holding the licensed Telerik .nupkg files.
+  telerikFeed: 'C:\agent\jera\packages'
+  # Names exactly as they appear in IIS Manager on IS-VBOXX02.
+  iisSiteName: 'TRS'
+  iisAppPoolName: 'TRS'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '$(dotnetVersion)'
+
+  # Restore from nuget.org plus the local folder on the server that holds the
+  # licensed Telerik .nupkg files (e.g. Telerik.UI.for.AspNet.Core.2023.2.606).
+  # Feeds are given inline with --source, so no NuGet.config is needed.
+  - script: >
+      dotnet restore "$(projectPath)"
+      --source "https://api.nuget.org/v3/index.json"
+      --source "$(telerikFeed)"
+    displayName: 'Restore'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build'
+    inputs:
+      command: 'build'
+      projects: '$(projectPath)'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+
+  # Publish to a plain folder (not zipped) so we can copy it in place.
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      projects: '$(projectPath)'
+      arguments: '--configuration $(buildConfiguration) --no-build --output $(publishDir)'
+      zipAfterPublish: false
+      modifyOutputPath: false
+
+  - task: PowerShell@2
+    displayName: 'Deploy to IIS site (local)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module WebAdministration
+
+        $site    = '$(iisSiteName)'
+        $appPool = '$(iisAppPoolName)'
+        $src     = '$(publishDir)'
+
+        # Resolve the site's real physical path (expands vars like %SystemDrive%).
+        $dest = (Get-Website -Name $site).physicalPath
+        $dest = [System.Environment]::ExpandEnvironmentVariables($dest)
+        Write-Host "Deploying '$src' -> site '$site' at '$dest'"
+
+        if (-not (Test-Path $dest)) { throw "Site physical path not found: $dest" }
+
+        # Stop the dedicated app pool so ASP.NET Core releases its DLLs.
+        if ((Get-WebAppPoolState -Name $appPool).Value -ne 'Stopped') {
+          Write-Host "Stopping app pool '$appPool'..."
+          Stop-WebAppPool -Name $appPool
+          # Wait for it to actually stop before touching files.
+          for ($i = 0; $i -lt 15 -and (Get-WebAppPoolState -Name $appPool).Value -ne 'Stopped'; $i++) {
+            Start-Sleep -Seconds 1
+          }
+        }
+
+        try {
+          # Copy/overwrite published files. No /MIR, so server-specific files
+          # already on the box (e.g. an environment appsettings.json) are kept.
+          # robocopy uses a bitmask exit code: 0-7 = success (1=copied,
+          # 2=extras, etc.), 8+ = a real failure.
+          robocopy $src $dest /E /R:3 /W:5 /NFL /NDL /NP
+          $rc = $LASTEXITCODE
+          if ($rc -ge 8) { throw "robocopy failed with code $rc" }
+          Write-Host "robocopy completed (exit code $rc = success)."
+        }
+        finally {
+          Write-Host "Starting app pool '$appPool'..."
+          Start-WebAppPool -Name $appPool
+        }
+
+        Write-Host "Deployment complete."
+        # robocopy left a non-zero (but successful) exit code; reset it so the
+        # PowerShell task does not treat the step as failed.
+        exit 0
