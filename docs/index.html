@@ -129,6 +129,12 @@
     padding:clamp(14px,3vw,28px);box-shadow:var(--shadow);overflow-x:auto}
   .mermaid{min-height:40px;display:flex;justify-content:center}
   .mermaid svg{max-width:100%;height:auto}
+  /* NOTE: deliberately no font-family override for .mermaid here. Mermaid
+     measures label text while the SVG still lives in a temporary container, so
+     any page-scoped rule would apply only to the final render and make the
+     measure font differ from the render font — which is what clips labels. The
+     diagram font is set solely through Mermaid's own config (DIAGRAM_FONT),
+     which it injects into the SVG and therefore applies during measurement. */
 
   .toggle{position:fixed;top:16px;right:16px;z-index:10;font-family:"IBM Plex Mono",monospace;font-size:12px;
     color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
@@ -291,32 +297,21 @@ const darkVars={background:"#171c27",primaryColor:"#222a3a",primaryBorderColor:"
   primaryTextColor:"#e7eaf1",lineColor:"#4e5871",secondaryColor:"#1d2432",tertiaryColor:"#1d2432",fontSize:"14px"};
 function currentTheme(){const s=document.documentElement.getAttribute("data-theme");
   return s||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}
+// Diagram label font — a system stack, available immediately, so Mermaid's text
+// measurement and the final render always agree. MUST match the .mermaid
+// font-family rule in the stylesheet above.
+const DIAGRAM_FONT='"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
 let seq=0;
-// Mermaid measures label text to size each node, so the web font must be
-// fully loaded BEFORE rendering — otherwise boxes are sized for the narrower
-// fallback font and the (wider) IBM Plex text overflows/clips once it swaps
-// in. document.fonts.ready alone is not enough: at module-eval time no IBM
-// Plex text has painted yet, so no font request is pending and ready resolves
-// immediately. Force each face to load explicitly first.
-async function ensureFonts(){
-  try{
-    if(document.fonts&&document.fonts.load){
-      await Promise.all([
-        '400 16px "IBM Plex Sans"','500 16px "IBM Plex Sans"',
-        '600 16px "IBM Plex Sans"','700 16px "IBM Plex Sans"',
-        '400 16px "IBM Plex Mono"','500 16px "IBM Plex Mono"','600 16px "IBM Plex Mono"'
-      ].map(f=>document.fonts.load(f)));
-      if(document.fonts.ready){ await document.fonts.ready; }
-    }
-  }catch(e){}
-}
+// No font waiting needed: diagram labels use DIAGRAM_FONT (a system stack), so
+// Mermaid measures and renders with the same, always-available font.
 async function renderAll(){
   if(typeof mermaid==="undefined")return;
-  await ensureFonts();
   const dark=currentTheme()==="dark";
   mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",
-    fontFamily:"'IBM Plex Sans', sans-serif",themeVariables:dark?darkVars:lightVars,
-    flowchart:{curve:"basis",htmlLabels:true,padding:14,nodeSpacing:44,rankSpacing:52,wrappingWidth:360}});
+    fontFamily:DIAGRAM_FONT,
+    themeVariables:Object.assign({},dark?darkVars:lightVars,{fontFamily:DIAGRAM_FONT}),
+    htmlLabels:false,
+    flowchart:{curve:"basis",htmlLabels:false,padding:14,nodeSpacing:44,rankSpacing:52,wrappingWidth:360}});
   for(const el of document.querySelectorAll(".mermaid")){
     const key=el.getAttribute("data-src");
     try{const {svg}=await mermaid.render("m-"+key+"-"+(seq++),SRC[key]);el.innerHTML=svg;}
