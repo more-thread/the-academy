@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRS Process Flow &amp; FAQ</title>
+<meta name="description" content="Process flowchart and interactive Q&A for the Training Registrar System (TRS).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#eef1f5; --panel:#ffffff; --panel-2:#f6f8fb;
+    --ink:#1a2130; --ink-soft:#4a5468; --ink-faint:#788396;
+    --line:#d8dee8; --line-strong:#c2cad8;
+    --accent:#33508f; --accent-soft:#e4eaf6;
+    --amber:#b5760f; --green:#2c8558; --red:#bb4437; --slate:#5a647a;
+    --shadow:0 1px 2px rgba(20,30,50,.05), 0 8px 24px rgba(20,30,50,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1219; --panel:#171c27; --panel-2:#1d2432;
+      --ink:#e7eaf1; --ink-soft:#aab3c5; --ink-faint:#7b869a;
+      --line:#2a3141; --line-strong:#3a4356;
+      --accent:#7d97d6; --accent-soft:#22304d;
+      --amber:#d99a3c; --green:#57b585; --red:#e07a6d; --slate:#8b95ab;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1219; --panel:#171c27; --panel-2:#1d2432;
+    --ink:#e7eaf1; --ink-soft:#aab3c5; --ink-faint:#7b869a;
+    --line:#2a3141; --line-strong:#3a4356;
+    --accent:#7d97d6; --accent-soft:#22304d;
+    --amber:#d99a3c; --green:#57b585; --red:#e07a6d; --slate:#8b95ab;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  img{max-width:100%}
+  .wrap{max-width:980px;margin:0 auto;padding:clamp(24px,5vw,64px) clamp(16px,4vw,40px) 80px}
+
+  header{margin-bottom:40px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-size:clamp(30px,6vw,46px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+  .sub{font-size:clamp(15px,2.4vw,18px);color:var(--ink-soft);max-width:64ch;margin:0 0 20px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-soft);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+
+  .section-label{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-faint);margin:0 0 14px}
+
+  /* ---- Ask panel ---- */
+  .ask{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:clamp(18px,3.5vw,30px);box-shadow:var(--shadow);margin-bottom:56px}
+  .ask h2{font-size:clamp(20px,3.4vw,26px);font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+  .ask .hint{color:var(--ink-soft);font-size:14px;margin:0 0 18px}
+  .askbar{display:flex;gap:10px;flex-wrap:wrap}
+  .askbar input{flex:1 1 260px;min-width:0;font:inherit;font-size:15px;color:var(--ink);
+    background:var(--panel-2);border:1px solid var(--line-strong);border-radius:10px;padding:12px 14px}
+  .askbar input::placeholder{color:var(--ink-faint)}
+  .askbar input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .askbar button{font:inherit;font-weight:600;font-size:15px;color:#fff;background:var(--accent);
+    border:none;border-radius:10px;padding:12px 22px;cursor:pointer}
+  .askbar button:hover{filter:brightness(1.06)}
+  .askbar button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+  .examples{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .examples span{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-faint);align-self:center;margin-right:2px}
+  .ex{font:inherit;font-size:13px;color:var(--accent);background:var(--accent-soft);border:none;
+    border-radius:999px;padding:6px 13px;cursor:pointer;text-align:left}
+  .ex:hover{filter:brightness(1.04)}
+  .ex:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  #answer{margin-top:22px}
+  .ans-card{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .ans-card .q{font-weight:600;font-size:16px;margin:0 0 8px;color:var(--ink);display:flex;gap:10px;align-items:baseline}
+  .ans-card .q .badge{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:5px;padding:2px 7px;flex:none}
+  .ans-card .body{color:var(--ink-soft);font-size:14.5px}
+  .ans-card .body code{font-family:"IBM Plex Mono",monospace;font-size:.86em;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .ans-card .body strong{color:var(--ink)}
+  .ans-card .src{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-faint);margin-top:10px}
+  .related{font-size:13px;color:var(--ink-faint);margin-top:4px}
+  .related button{font:inherit;font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;
+    padding:2px 0;text-decoration:underline;text-underline-offset:2px}
+  .noans{color:var(--ink-soft);font-size:14.5px}
+  .pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    padding:2px 8px;border-radius:5px;color:#fff}
+  .pill.slate{background:var(--slate)} .pill.amber{background:var(--amber)}
+  .pill.green{background:var(--green)} .pill.red{background:var(--red)}
+
+  /* ---- Flowchart phases ---- */
+  .legend{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:0 0 48px;box-shadow:var(--shadow)}
+  .legend h2{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-faint);margin:0 6px 0 0}
+  .leg{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft)}
+  .swatch{width:26px;height:16px;border-radius:4px;flex:none}
+  .sw-amber{background:var(--amber)} .sw-green{background:var(--green)}
+  .sw-red{background:var(--red)} .sw-slate{background:var(--slate)}
+  .diamond{width:15px;height:15px;transform:rotate(45deg);border:1.6px solid var(--ink-faint);flex:none}
+  .hex{width:22px;height:15px;background:var(--accent);flex:none;
+    clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+
+  .phase{margin-bottom:56px}
+  .phase-head{display:flex;align-items:baseline;gap:16px;margin-bottom:10px}
+  .num{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;color:var(--accent);flex:none;padding-top:2px}
+  .phase h3{font-size:clamp(20px,3.4vw,26px);font-weight:600;letter-spacing:-.01em;margin:0;line-height:1.2}
+  .phase p{color:var(--ink-soft);margin:0 0 16px;padding-left:40px;max-width:70ch;font-size:15px}
+  .phase p code{font-family:"IBM Plex Mono",monospace;font-size:.86em;background:var(--panel);
+    border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .refs{display:flex;flex-wrap:wrap;gap:7px;padding-left:40px;margin:0 0 18px}
+  .ref{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--accent);
+    background:var(--accent-soft);border-radius:6px;padding:3px 9px}
+  .diagram-panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:clamp(14px,3vw,28px);box-shadow:var(--shadow);overflow-x:auto}
+  .mermaid{min-height:40px;display:flex;justify-content:center}
+  .mermaid svg{max-width:100%;height:auto}
+
+  .toggle{position:fixed;top:16px;right:16px;z-index:10;font-family:"IBM Plex Mono",monospace;font-size:12px;
+    color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;cursor:pointer;box-shadow:var(--shadow)}
+  .toggle:hover{border-color:var(--line-strong);color:var(--ink)}
+  .toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  footer{border-top:1px solid var(--line);padding-top:20px;margin-top:24px;font-size:13px;color:var(--ink-faint)}
+  footer code{font-family:"IBM Plex Mono",monospace;color:var(--ink-soft)}
+  a{color:var(--accent)}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<button class="toggle" id="themeToggle" type="button" aria-label="Toggle color theme">◐ theme</button>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Process Flowchart &amp; FAQ</p>
+    <h1>Training Registrar System</h1>
+    <p class="sub">The end-to-end flow of TRS — from an encrypted portal link through authorization to the registration state machine — plus an interactive Q&amp;A that answers questions straight from the system's rules.</p>
+    <div class="meta">
+      <span class="chip">ASP.NET Core 7 · MVC</span>
+      <span class="chip">EF Core · SQL Server</span>
+      <span class="chip">Telerik / Kendo UI</span>
+      <span class="chip">Session + audit (tUserLogs)</span>
+    </div>
+  </header>
+
+  <!-- ============ ASK ============ -->
+  <section class="ask" aria-labelledby="ask-h">
+    <h2 id="ask-h">Ask about the process</h2>
+    <p class="hint">Type a question about how TRS works. Answers come from a knowledge base built from the source code — matched in your browser, no server needed.</p>
+    <div class="askbar">
+      <input id="q" type="text" placeholder="e.g. When will registration status be open?" autocomplete="off" aria-label="Your question">
+      <button id="askBtn" type="button">Ask</button>
+    </div>
+    <div class="examples" id="examples"><span>Try:</span></div>
+    <div id="answer" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ LEGEND ============ -->
+  <p class="section-label">The flow</p>
+  <div class="legend">
+    <h2>Legend</h2>
+    <span class="leg"><span class="swatch sw-slate"></span>Schedule / neutral state</span>
+    <span class="leg"><span class="swatch sw-amber"></span>Pending review</span>
+    <span class="leg"><span class="swatch sw-green"></span>Registered / completed</span>
+    <span class="leg"><span class="swatch sw-red"></span>Declined / cancelled</span>
+    <span class="leg"><span class="hex"></span>Human actor step</span>
+    <span class="leg"><span class="diamond"></span>Decision</span>
+  </div>
+
+  <section class="phase">
+    <div class="phase-head"><span class="num">01</span><h3>Authentication &amp; session bootstrap</h3></div>
+    <p>Users arrive from the HR Gateway portal with an AES-encrypted employee id in the URL. The default route is <code>Home/Crypto</code>, which decrypts the id, loads HR master data via stored procedure, and writes a server-side session before the dashboard renders with the user's permitted forms and menu.</p>
+    <div class="refs">
+      <span class="ref">HomeController.cs · Crypto → Index</span>
+      <span class="ref">EmployeeAuthenticationService.cs</span>
+      <span class="ref">SessionService.cs</span>
+      <span class="ref">sp_Global_GetUserInfo</span>
+    </div>
+    <div class="diagram-panel"><div class="mermaid" data-src="d1"></div></div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-head"><span class="num">02</span><h3>Per-request authorization</h3></div>
+    <p>Every feature action passes two action filters before it runs. <code>[ValidateSession]</code> enforces the 30-minute sliding timeout; <code>[ValidateAccess]</code> checks the caller's form permission against the cached grant list. Only then does the controller reach its service, the EF DbContext, and SQL Server — writing an audit row for any mutating action.</p>
+    <div class="refs">
+      <span class="ref">ValidateSessionAttribute.cs</span>
+      <span class="ref">ValidateAccessAttribute.cs</span>
+      <span class="ref">FormService.cs (grant cache)</span>
+      <span class="ref">AppDBContext.cs</span>
+    </div>
+    <div class="diagram-panel"><div class="mermaid" data-src="d2"></div></div>
+  </section>
+
+  <section class="phase">
+    <div class="phase-head"><span class="num">03</span><h3>Training registration lifecycle</h3></div>
+    <p>The core state machine. A schedule is published to <code>AVAILABLE</code> and registration is <code>OPEN</code> while seats remain and the start date is still ahead. <code>RegisterTraining</code> branches on employee level — level&nbsp;≤&nbsp;5 needs superior approval first, higher levels skip to coordinator confirmation. Confirmation registers the trainee (and closes the class when full), monitoring records attendance and scores toward completion, and feedback closes the loop. Every transition fires an email and an audit log; cancelling a seat reopens registration.</p>
+    <div class="refs">
+      <span class="ref">TrainingScheduleController.cs</span>
+      <span class="ref">TrainingScheduleService.cs (auto open/close)</span>
+      <span class="ref">TrainingRegistrationController.cs:166</span>
+      <span class="ref">TrainingRegistrationApprovalController.cs:104</span>
+      <span class="ref">TrainingRegistrationConfirmationController.cs</span>
+      <span class="ref">TrainingMonitoringController.cs</span>
+    </div>
+    <div class="diagram-panel"><div class="mermaid" data-src="d3"></div></div>
+  </section>
+
+  <footer>
+    Flow and answers reconstructed from source. Status labels
+    (<code>DRAFT</code>, <code>AVAILABLE</code>, <code>OPEN</code>, <code>CLOSED</code>,
+    <code>FOR APPROVAL</code>, <code>FOR CONFIRMATION</code>, <code>REGISTERED</code>,
+    <code>DISAPPROVED</code>, <code>REJECTED</code>, <code>CANCELLED</code>, <code>COMPLETED</code>)
+    are the literal status values used in the controllers and <code>TrainingScheduleService.cs</code>.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.1/mermaid.min.js"></script>
+<script>
+/* ============================ DIAGRAMS ============================ */
+const SRC = {
+  d1:`flowchart TD
+    P([External portal link<br/>encrypted employee id]) --> C[Home/Crypto]
+    C --> DEC{AES decrypt<br/>valid?}
+    DEC -- no --> ERR([Home/Error]):::bad
+    DEC -- yes --> GU[GetUserInfo<br/>stored procedure]
+    GU --> SES[Create user session<br/>30-min sliding]
+    SES --> IX[Home/Index]
+    IX --> SV{Session valid?}
+    SV -- no --> TO([Home/Timeout]):::bad
+    SV -- yes --> PM[Load form permissions + menu<br/>FormService · MenuService]
+    PM --> AUD[/PageVisit audit → tUserLogs/]
+    AUD --> DASH([Dashboard]):::good
+    classDef bad fill:#bb4437,stroke:#bb4437,color:#fff;
+    classDef good fill:#2c8558,stroke:#2c8558,color:#fff;`,
+  d2:`flowchart TD
+    REQ([Feature request]) --> VS{ValidateSession<br/>session valid?}
+    VS -- no --> TO([Home/Timeout]):::bad
+    VS -- yes --> VA{ValidateAccess<br/>form permission?}
+    VA -- no --> AD([Home/AccessDenied]):::bad
+    VA -- yes --> CTRL[Controller action]
+    CTRL --> SVC[Service]
+    SVC --> DB[(AppDBContext<br/>SQL Server)]
+    DB --> RESP([View / JSON]):::good
+    CTRL -. mutating action .-> LOG[/audit → tUserLogs/]
+    classDef bad fill:#bb4437,stroke:#bb4437,color:#fff;
+    classDef good fill:#2c8558,stroke:#2c8558,color:#fff;`,
+  d3:`flowchart TD
+    DRAFT[Schedule: DRAFT<br/>registration CLOSED]:::slate --> PUB[Publish → AVAILABLE]:::slate
+    PUB --> OPEN{Seats left AND<br/>start date ahead?}
+    OPEN -- no --> CL[Registration CLOSED]:::slate
+    OPEN -- yes --> ROPEN[Registration OPEN]:::slate
+    ROPEN --> REG{{Employee registers<br/>RegisterTraining}}:::actor
+    REG --> LVL{EmployeeLevel<br/>&le; 5 ?}
+    LVL -- yes --> FA[FOR APPROVAL]:::pending
+    LVL -- no --> FC[FOR CONFIRMATION]:::pending
+    FA --> SUP{{Superior review}}:::actor
+    SUP -- approve --> FC
+    SUP -- disapprove --> DIS[DISAPPROVED]:::bad
+    FC --> CRD{{Coordinator review}}:::actor
+    CRD -- confirm --> RG[REGISTERED<br/>count ++]:::good
+    CRD -- reject --> REJ[REJECTED]:::bad
+    RG -. class full .-> CL
+    RG --> MON{{Monitoring<br/>attendance + scores}}:::actor
+    MON --> COMP[Schedule COMPLETED]:::good
+    COMP --> FB[Feedback questionnaire]:::good
+    RG -- cancel --> CAN[CANCELLED<br/>count -- · seat reopens]:::bad
+    classDef slate fill:#5a647a,stroke:#5a647a,color:#fff;
+    classDef pending fill:#b5760f,stroke:#b5760f,color:#fff;
+    classDef good fill:#2c8558,stroke:#2c8558,color:#fff;
+    classDef bad fill:#bb4437,stroke:#bb4437,color:#fff;
+    classDef actor fill:#33508f,stroke:#33508f,color:#fff;`
+};
+const lightVars={background:"#ffffff",primaryColor:"#eef1f7",primaryBorderColor:"#33508f",
+  primaryTextColor:"#1a2130",lineColor:"#97a1b4",secondaryColor:"#f6f8fb",tertiaryColor:"#f6f8fb",fontSize:"14px"};
+const darkVars={background:"#171c27",primaryColor:"#222a3a",primaryBorderColor:"#7d97d6",
+  primaryTextColor:"#e7eaf1",lineColor:"#4e5871",secondaryColor:"#1d2432",tertiaryColor:"#1d2432",fontSize:"14px"};
+function currentTheme(){const s=document.documentElement.getAttribute("data-theme");
+  return s||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}
+let seq=0;
+async function renderAll(){
+  if(typeof mermaid==="undefined")return;
+  const dark=currentTheme()==="dark";
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",
+    fontFamily:"'IBM Plex Sans', sans-serif",themeVariables:dark?darkVars:lightVars,
+    flowchart:{curve:"basis",htmlLabels:true,padding:14,nodeSpacing:44,rankSpacing:52}});
+  for(const el of document.querySelectorAll(".mermaid")){
+    const key=el.getAttribute("data-src");
+    try{const {svg}=await mermaid.render("m-"+key+"-"+(seq++),SRC[key]);el.innerHTML=svg;}
+    catch(e){el.textContent="diagram failed to render";}
+  }
+}
+
+/* ============================ Q&A ============================ */
+const P={slate:'<span class="pill slate">',amber:'<span class="pill amber">',green:'<span class="pill green">',red:'<span class="pill red">',end:'</span>'};
+const KB=[
+  {id:"open",q:"When will registration status be OPEN?",
+   kw:["registration","status","open","when","available","seats","register","opens","opening","start","date"],
+   a:`Registration status is set to ${P.slate}OPEN${P.end} when the schedule's <strong>Schedule Status is <code>AVAILABLE</code></strong> and <strong>none</strong> of the auto-close conditions are met — meaning:
+      <br>• seats remain (<code>RegisteredEmployeeCount &lt; ClassSize</code>), <br>• the <strong>Start Date has not been reached yet</strong> (<code>StartDate &gt; today</code>), and <br>• the schedule is not <code>CANCELLED</code>.
+      <br><br>New schedules are created as <code>DRAFT</code> with registration <code>CLOSED</code>; publishing them to <code>AVAILABLE</code> is what opens registration. Because there is no background job, the status is recalculated every time a schedule is loaded.`,
+   src:"TrainingScheduleService.cs · IsRegistrationAutoCloseConditionMet / RecalculateRegistrationStatus"},
+  {id:"close",q:"When does registration CLOSE?",
+   kw:["registration","status","close","closed","closes","full","when","stop","ends","deadline"],
+   a:`While a schedule is <code>AVAILABLE</code>, registration auto-closes to ${P.slate}CLOSED${P.end} when <strong>any</strong> of these is true:
+      <br>• the class is full (<code>RegisteredEmployeeCount &ge; ClassSize</code>), <br>• the <strong>Start Date has been reached</strong> (<code>StartDate &le; today</code>), or <br>• the schedule is <code>CANCELLED</code>.
+      <br><br>It also closes when the training is completed (monitoring sets <code>ScheduleStatus = COMPLETED</code> and <code>RegistrationStatus = CLOSED</code>). Cancelling a registered seat reopens registration if the class is no longer full.`,
+   src:"TrainingScheduleService.cs:85 · TrainingMonitoringController.cs:456"},
+  {id:"register",q:"What happens when I register for a training?",
+   kw:["register","registration","happens","sign","up","enroll","apply","registertraining","after"],
+   a:`<code>RegisterTraining</code> creates your registration and branches on your <strong>Employee Level</strong>:
+      <br>• <strong>Level ≤ 5</strong> → status ${P.amber}FOR APPROVAL${P.end}; your <strong>superior</strong> is emailed to approve.
+      <br>• <strong>Level &gt; 5</strong> → status ${P.amber}FOR CONFIRMATION${P.end}; you, the coordinators, your superior and section head are emailed.
+      <br><br>A unique <code>RegistrationCode</code> (<code>{TrainingCode}-00001</code>) is assigned and the action is audit-logged.`,
+   src:"TrainingRegistrationController.cs:166 (RegisterTraining)"},
+  {id:"approve",q:"Who approves my registration?",
+   kw:["who","approve","approval","approves","superior","boss","manager","authorize","level"],
+   a:`It depends on your level. If you are <strong>Level ≤ 5</strong>, your <strong>superior</strong> approves first (${P.amber}FOR APPROVAL${P.end} → ${P.amber}FOR CONFIRMATION${P.end}, or ${P.red}DISAPPROVED${P.end}). Everyone then needs a <strong>training coordinator</strong> to confirm (${P.amber}FOR CONFIRMATION${P.end} → ${P.green}REGISTERED${P.end} or ${P.red}REJECTED${P.end}). Level &gt; 5 skips superior approval and goes straight to coordinator confirmation.`,
+   src:"TrainingRegistrationApprovalController.cs:104 · TrainingRegistrationConfirmationController.cs"},
+  {id:"coordinator",q:"What does a training coordinator do?",
+   kw:["coordinator","confirm","confirmation","reject","rejected","confirms","approve","registered"],
+   a:`A coordinator reviews ${P.amber}FOR CONFIRMATION${P.end} registrations. <strong>Confirm</strong> → ${P.green}REGISTERED${P.end}, which increments <code>RegisteredEmployeeCount</code> and closes the class if it becomes full. <strong>Reject</strong> → ${P.red}REJECTED${P.end}, which reopens the seat (registration back to <code>OPEN</code>).`,
+   src:"TrainingRegistrationConfirmationController.cs:167"},
+  {id:"statuses",q:"What are the registration statuses?",
+   kw:["statuses","status","registration","states","list","values","trainee","what"],
+   a:`Trainee registration moves through: ${P.amber}FOR APPROVAL${P.end}, ${P.amber}FOR CONFIRMATION${P.end}, ${P.green}REGISTERED${P.end}, then ${P.green}COMPLETED${P.end}/feedback. Negative outcomes: ${P.red}DISAPPROVED${P.end} (superior), ${P.red}REJECTED${P.end} (coordinator), ${P.red}CANCELLED${P.end} (seat given up). A rescheduled class puts affected trainees into <code>SCHEDULE FOR CONFIRMATION</code> to re-confirm.`,
+   src:"Registration controllers · TrainingRegistrationStatus values"},
+  {id:"schedstatus",q:"What are the schedule statuses?",
+   kw:["schedule","statuses","status","draft","available","completed","cancelled","states"],
+   a:`A schedule's <code>ScheduleStatus</code> is one of: ${P.slate}DRAFT${P.end} (created, not open for registration), ${P.slate}AVAILABLE${P.end} (published; registration is then <code>OPEN</code> or <code>CLOSED</code>), ${P.green}COMPLETED${P.end} (delivered and scored), or ${P.red}CANCELLED${P.end}. Separately, <code>RegistrationStatus</code> is <code>OPEN</code> or <code>CLOSED</code>.`,
+   src:"TrainingScheduleController.cs · TrainingScheduleService.cs"},
+  {id:"cancel",q:"What happens when I cancel a registration?",
+   kw:["cancel","cancelled","cancellation","withdraw","drop","seat","reopen","give","up"],
+   a:`Cancelling a ${P.green}REGISTERED${P.end} seat sets the registration to ${P.red}CANCELLED${P.end}, decrements <code>RegisteredEmployeeCount</code>, and reopens the schedule (<code>RegistrationStatus = OPEN</code>) unless the class is still full. Coordinators and the superior are notified.`,
+   src:"TrainingRegistrationController.cs:327 (ConfirmCancellation)"},
+  {id:"completed",q:"When does a training become COMPLETED?",
+   kw:["completed","complete","finish","done","monitoring","attendance","scores","when"],
+   a:`During delivery, a coordinator records attendance, post-test scores and the evaluation score in <strong>Monitoring</strong>. When finalized, the schedule is set to ${P.green}COMPLETED${P.end} and registration to <code>CLOSED</code>. Only ${P.green}REGISTERED${P.end} trainees on a <code>COMPLETED</code> schedule count toward the training profile.`,
+   src:"TrainingMonitoringController.cs:456"},
+  {id:"feedback",q:"When can I submit feedback?",
+   kw:["feedback","questionnaire","survey","evaluate","evaluation","submit","when","after"],
+   a:`Feedback is available to trainees who are ${P.green}REGISTERED${P.end} on a schedule whose status is ${P.green}COMPLETED${P.end}. Answers are saved against the feedback questionnaire and the registration's feedback status is updated.`,
+   src:"TrainingFeedbackController.cs:152"},
+  {id:"auth",q:"How does login / authentication work?",
+   kw:["login","log","auth","authentication","sign","in","crypto","decrypt","access","portal","how"],
+   a:`There is no username/password form. Users arrive from the HR Gateway portal with an <strong>AES-encrypted employee id</strong> in the URL. <code>Home/Crypto</code> strips a 4-char prefix, decrypts the id, loads HR info via <code>sp_Global_GetUserInfo</code>, and creates a server-side session, then redirects to <code>Home/Index</code>.`,
+   src:"HomeController.cs:38 · EmployeeAuthenticationService.cs"},
+  {id:"timeout",q:"What is the session timeout?",
+   kw:["session","timeout","expire","expires","idle","30","minutes","logout","how","long"],
+   a:`Sessions use a <strong>30-minute sliding idle timeout</strong> (configured in <code>Program.cs</code>). Each guarded action re-checks validity via <code>[ValidateSession]</code>; an expired session redirects to <code>Home/Timeout</code>, and can be resumed via <code>ContinueSession</code>.`,
+   src:"Program.cs:35 · ValidateSessionAttribute.cs"},
+  {id:"access",q:"How are permissions / access controlled?",
+   kw:["permission","permissions","access","validateaccess","form","denied","authorization","role","allowed"],
+   a:`Each action is guarded by <code>[ValidateAccess(ControllerName=…)]</code>, which checks the user's granted forms (loaded at login into <code>FormService</code>). No matching grant → redirect to <code>Home/AccessDenied</code>. The menu is also built from these same permissions.`,
+   src:"ValidateAccessAttribute.cs · FormService.cs · MenuService.cs"},
+  {id:"email",q:"What emails does the system send?",
+   kw:["email","emails","notification","notify","mail","send","sent","recipients"],
+   a:`Emails fire at each transition through <code>GlobalService.SendEmail → sp_Global_SendEmail</code> using templates in <code>EmailTemplate.cs</code>: registration for approval (to superior), registration for confirmation (to trainee + coordinators + superior + section head), approval/disapproval, confirmation/rejection, cancellation, and schedule changes.`,
+   src:"GlobalService.cs · EmailTemplate.cs"},
+  {id:"audit",q:"What is logged / audited?",
+   kw:["audit","log","logs","logging","tuserlogs","track","history","activity"],
+   a:`Every mutating action and page visit writes an audit row to <code>tUserLogs</code> via <code>GlobalService.Log()</code> / <code>PageVisitLog()</code>, capturing host name, user id and employee number. These surface in the Activity Log screen.`,
+   src:"GlobalService.cs · ActivityLogController.cs"},
+  {id:"level",q:"What does employee level ≤ 5 mean?",
+   kw:["level","employee","5","five","threshold","rank","grade","approval","superior"],
+   a:`Employee level drives the approval path. The last digit of the employee's level is parsed; <strong>≤ 5</strong> means the registration needs <strong>superior approval</strong> first (${P.amber}FOR APPROVAL${P.end}). <strong>&gt; 5</strong> (more senior) skips approval and goes directly to ${P.amber}FOR CONFIRMATION${P.end}.`,
+   src:"TrainingRegistrationController.cs:196"},
+  {id:"stack",q:"What is the technology stack?",
+   kw:["stack","tech","technology","built","framework","language","database","aspnet","dotnet"],
+   a:`TRS is an <strong>ASP.NET Core 7 MVC</strong> app (C#, Razor views) using <strong>Entity Framework Core 7</strong> over <strong>SQL Server</strong>, with stored procedures and views for HR data, <strong>Telerik/Kendo UI</strong> grids and calendar, server-side session state, and EPPlus for Excel export.`,
+   src:"Program.cs · TRS.csproj"},
+  {id:"reschedule",q:"What is SCHEDULE FOR CONFIRMATION?",
+   kw:["schedule","confirmation","reschedule","rescheduled","changed","date","reconfirm","edit"],
+   a:`When a schedule with existing ${P.green}REGISTERED${P.end}/${P.amber}FOR CONFIRMATION${P.end} trainees is edited (e.g. date/time/speaker change), those trainees are moved to <code>SCHEDULE FOR CONFIRMATION</code> and notified, so they can re-confirm the new arrangement.`,
+   src:"TrainingScheduleController.cs:376"}
+];
+
+const STOP=new Set(["the","a","an","is","are","do","does","when","what","who","how","will","be","to","for","of","in","on","my","i","you","it","this","that","and","or","if","can","get","become","status"]);
+function norm(s){return s.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w=>w&&!STOP.has(w));}
+function score(tokens,entry){
+  const kw=new Set(entry.kw), qt=new Set(norm(entry.q));
+  let s=0;
+  for(const t of tokens){
+    if(kw.has(t))s+=3;
+    else if(qt.has(t))s+=1.2;
+    else{for(const k of kw){if(k.length>3&&(k.startsWith(t)||t.startsWith(k))){s+=1.4;break;}}}
+  }
+  return s;
+}
+function ansCard(entry,badge){
+  return `<div class="ans-card"><p class="q">${badge?'<span class="badge">'+badge+'</span>':''}${entry.q}</p>`+
+    `<div class="body">${entry.a}</div><div class="src">source · ${entry.src}</div></div>`;
+}
+function answer(text){
+  const box=document.getElementById("answer");
+  const tokens=norm(text);
+  if(!tokens.length){box.innerHTML="";return;}
+  const ranked=KB.map(e=>({e,s:score(tokens,e)})).sort((a,b)=>b.s-a.s);
+  const best=ranked[0];
+  if(!best||best.s<2.5){
+    box.innerHTML=`<div class="ans-card"><div class="noans">I don't have a specific answer for that. Try rephrasing, tap one of the examples above, or explore the flowchart below. I can answer questions about registration status, approval, confirmation, cancellation, completion, feedback, login, permissions, timeouts, emails, and the tech stack.</div></div>`;
+    return;
+  }
+  let html=ansCard(best.e,"best match");
+  const related=ranked.slice(1).filter(r=>r.s>=2.5).slice(0,2);
+  if(related.length){
+    html+=`<div class="related">Related: `+
+      related.map(r=>`<button type="button" data-id="${r.e.id}">${r.e.q}</button>`).join(" &nbsp;·&nbsp; ")+`</div>`;
+  }
+  box.innerHTML=html;
+  box.querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>{
+    const e=KB.find(x=>x.id===b.getAttribute("data-id"));
+    document.getElementById("q").value=e.q;
+    document.getElementById("answer").innerHTML=ansCard(e,"answer");
+    document.getElementById("q").focus();
+  }));
+}
+
+/* wire up */
+const qEl=document.getElementById("q");
+document.getElementById("askBtn").addEventListener("click",()=>answer(qEl.value));
+qEl.addEventListener("keydown",e=>{if(e.key==="Enter")answer(qEl.value);});
+const EX=["open","register","cancel","completed","auth","timeout"];
+const exWrap=document.getElementById("examples");
+EX.forEach(id=>{const e=KB.find(x=>x.id===id);const b=document.createElement("button");
+  b.className="ex";b.type="button";b.textContent=e.q;
+  b.addEventListener("click",()=>{qEl.value=e.q;answer(e.q);qEl.focus();});exWrap.appendChild(b);});
+
+/* theme */
+document.getElementById("themeToggle").addEventListener("click",()=>{
+  document.documentElement.setAttribute("data-theme",currentTheme()==="dark"?"light":"dark");renderAll();});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{
+  if(!document.documentElement.getAttribute("data-theme"))renderAll();});
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",renderAll);
+else renderAll();
+</script>
+</body>
+</html>
