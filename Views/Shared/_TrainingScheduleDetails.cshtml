@@ -329,6 +329,7 @@
                 @(Html.Kendo().DropDownList()
                     .Name("dd_RegistrationStatus")
                     .Enable(canEditRegistrationStatus)
+                    .HtmlAttributes(new { data_original_status = currentRegistrationStatus })
                     .Value(currentRegistrationStatus)
                     .BindTo(
                         new List<string>(){
@@ -502,18 +503,6 @@
 
 
     }//end of function
-
-    function dd_RegistrationStatus_OnChange() {
-        var dropdown = $("#dd_RegistrationStatus").data("kendoDropDownList");
-        var newValue = dropdown.value();
-        var originalValue = "@currentRegistrationStatus";
-
-        if (newValue && newValue !== originalValue) {
-            $("#btn_saveRegistrationStatus").show();
-        } else {
-            $("#btn_saveRegistrationStatus").hide();
-        }
-    }
 
     async function SaveRegistrationStatus() {
         var dropdown = $("#dd_RegistrationStatus").data("kendoDropDownList");

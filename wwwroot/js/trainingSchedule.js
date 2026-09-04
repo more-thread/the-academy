@@ -91,5 +91,17 @@ function tp_EndTime_OnChange() {
     }
 }
 function CloseWindow(){
-    $("#window_details").data("kendoWindow").close();         
+    $("#window_details").data("kendoWindow").close();
+}
+
+function dd_RegistrationStatus_OnChange() {
+    var dropdown = $("#dd_RegistrationStatus").data("kendoDropDownList");
+    var newValue = dropdown.value();
+    var originalValue = $("#dd_RegistrationStatus").data("originalStatus");
+
+    if (newValue && newValue !== originalValue) {
+        $("#btn_saveRegistrationStatus").show();
+    } else {
+        $("#btn_saveRegistrationStatus").hide();
+    }
 }
