@@ -99,17 +99,10 @@ stages:
         strategy:
           runOnce:
             deploy:
+              # A deployment job automatically downloads the current pipeline's
+              # artifacts to $(Pipeline.Workspace)/<artifactName>, so no explicit
+              # download task (and no task-version compatibility worries) needed.
               steps:
-                - download: none
-
-                - task: DownloadBuildArtifacts@1
-                  displayName: 'Download artifact: drop'
-                  inputs:
-                    buildType: 'current'
-                    downloadType: 'single'
-                    artifactName: 'drop'
-                    downloadPath: '$(System.ArtifactsDirectory)'
-
                 # Deploy into the existing "TRS" site. No site/app-pool/binding
                 # management here, so the custom app-pool identity, the
                 # https:88 binding and the SSL certificate are left untouched.
@@ -117,7 +110,7 @@ stages:
                   displayName: 'Deploy package with Web Deploy'
                   inputs:
                     WebSiteName: '$(iisWebsiteName)'
-                    Package: '$(System.ArtifactsDirectory)/drop/*.zip'
+                    Package: '$(Pipeline.Workspace)/drop/*.zip'
                     # Keep appsettings/other in-place config from being wiped;
                     # flip to true only if you want an exact mirror of the build.
                     RemoveAdditionalFilesFlag: false
