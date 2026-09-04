@@ -1,0 +1,151 @@
+# Azure DevOps pipeline: build the TRS ASP.NET Core app and publish it to IIS.
+#
+# Stage 1 (Build) runs on a Microsoft-hosted Windows agent: it restores,
+# builds, publishes the app and produces a Web Deploy (.zip) package that is
+# saved as a pipeline artifact.
+#
+# Stage 2 (Deploy) runs on a Windows deployment group that contains the IIS
+# server(s). It downloads the package and uses the IIS Web App Manage / Deploy
+# tasks to create-or-update the app pool + website and push the package with
+# Web Deploy (msdeploy). The deployment-group agent must be installed on the
+# target machine(s) with the "IIS" tag.
+#
+# One-time setup on the IIS server:
+#   * Install the ASP.NET Core Hosting Bundle (matching the target framework).
+#   * Install Web Deploy 3.6+ (required by the IIS Web App Deploy task).
+#   * Register the machine in the Azure DevOps deployment group named below
+#     and give it the tag "IIS".
+#
+# Override the variables below (or set them in the pipeline UI / a variable
+# group) to match your environment.
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '7.0.x'
+  # Path to the project to publish.
+  projectPath: 'TRS.csproj'
+  # --- IIS deployment settings (override for your server) ---
+  deploymentGroupName: 'iis-servers'
+  iisWebsiteName: 'TRS'
+  iisAppPoolName: 'TRS'
+  # Physical folder on the IIS server that the website maps to.
+  iisPhysicalPath: '%SystemDrive%\inetpub\wwwroot\TRS'
+  # Binding for the site (adjust protocol/port/host as needed).
+  iisBindProtocol: 'http'
+  iisBindPort: '80'
+
+stages:
+  - stage: Build
+    displayName: 'Build & package'
+    jobs:
+      - job: Build
+        displayName: 'Publish web deploy package'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '$(dotnetVersion)'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore'
+            inputs:
+              command: 'restore'
+              projects: '$(projectPath)'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build'
+            inputs:
+              command: 'build'
+              projects: '$(projectPath)'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          # Publish and zip the output so it can be pushed with Web Deploy.
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish'
+            inputs:
+              command: 'publish'
+              publishWebProjects: false
+              projects: '$(projectPath)'
+              arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/site'
+              zipAfterPublish: true
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish artifact: drop'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/site'
+              ArtifactName: 'drop'
+
+  - stage: Deploy
+    displayName: 'Deploy to IIS'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment: DeployIIS
+        displayName: 'Deploy to IIS server'
+        environment:
+          name: 'production'
+          resourceType: VirtualMachine
+        # Target the Windows deployment group machines tagged "IIS".
+        pool:
+          name: '$(deploymentGroupName)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: none
+
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download artifact: drop'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+
+                - task: IISWebAppManagementOnMachineGroup@0
+                  displayName: 'Create/Update IIS website & app pool'
+                  inputs:
+                    enableIIS: true
+                    IISDeploymentType: 'IISWebsite'
+                    ActionIISWebsite: 'CreateOrUpdateWebsite'
+                    WebsiteName: '$(iisWebsiteName)'
+                    WebsitePhysicalPath: '$(iisPhysicalPath)'
+                    WebsitePhysicalPathAuth: 'WebsiteUserPassThrough'
+                    AddBinding: true
+                    Bindings: |
+                      {
+                        "bindings": [
+                          {
+                            "protocol": "$(iisBindProtocol)",
+                            "ipAddress": "*",
+                            "port": "$(iisBindPort)",
+                            "hostname": "",
+                            "sslThumbprint": "",
+                            "sniFlag": false
+                          }
+                        ]
+                      }
+                    CreateOrUpdateAppPoolForWebsite: true
+                    AppPoolNameForWebsite: '$(iisAppPoolName)'
+                    # ASP.NET Core runs out-of-process behind the ANCM module,
+                    # so the app pool uses the "No Managed Code" runtime.
+                    DotNetVersionForWebsite: 'No Managed Code'
+                    PipeLineModeForWebsite: 'Integrated'
+                    AppPoolIdentityForWebsite: 'ApplicationPoolIdentity'
+
+                - task: IISWebAppDeploymentOnMachineGroup@0
+                  displayName: 'Deploy package with Web Deploy'
+                  inputs:
+                    WebSiteName: '$(iisWebsiteName)'
+                    Package: '$(System.ArtifactsDirectory)/drop/*.zip'
+                    RemoveAdditionalFilesFlag: true
+                    TakeAppOfflineFlag: true
