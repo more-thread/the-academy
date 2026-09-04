@@ -49,6 +49,15 @@ steps:
     inputs:
       command: 'restore'
       projects: '$(projectPath)'
+      # Use the repo NuGet.config so the Telerik private feed is included.
+      feedsToUse: 'config'
+      nugetConfigPath: 'NuGet.config'
+    # Map the secret pipeline variables into the env vars that NuGet.config
+    # references (%TELERIK_USERNAME% / %TELERIK_PASSWORD%). Define these as
+    # secret variables in the pipeline UI or a linked variable group.
+    env:
+      TELERIK_USERNAME: $(TelerikUsername)
+      TELERIK_PASSWORD: $(TelerikPassword)
 
   - task: DotNetCoreCLI@2
     displayName: 'Build'
