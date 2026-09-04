@@ -1,27 +1,22 @@
-# Azure DevOps pipeline: build the TRS ASP.NET Core app and publish it to an
-# EXISTING IIS site on server IS-VBOXX02.
+# Azure DevOps (Server / on-prem) pipeline: build the TRS ASP.NET Core app and
+# publish it into the EXISTING IIS site on IS-VBOXX02.
 #
-# The "TRS" website, its "TRS" application pool (running under a custom domain
-# identity), and the https binding (10.101.50.150:88 with an SSL certificate)
-# already exist on the server and are managed by hand. This pipeline therefore
-# does NOT create or reconfigure the site, app pool, identity, or bindings — it
-# only pushes new app files into the existing site with Web Deploy (msdeploy).
+# The self-hosted agent "QA_VBOX" (pool: agent_pool_jsr) runs ON the IIS server
+# itself, so build and deploy happen on the same machine. That means there is
+# no need for a deployment group, artifact download, Web Deploy/msdeploy, or any
+# marketplace extension — the deploy step copies the freshly published files
+# straight into the existing site's physical folder using the IIS PowerShell
+# module that ships with IIS.
 #
-# Stage 1 (Build) runs on a Microsoft-hosted Windows agent: it restores,
-# builds, publishes the app and produces a Web Deploy (.zip) package saved as a
-# pipeline artifact.
+# The "TRS" website and "TRS" application pool (custom domain identity, https:88
+# binding, SSL cert) already exist and are managed by hand; this pipeline does
+# NOT touch that configuration. It only stops the app pool, refreshes the files,
+# and starts it again.
 #
-# Stage 2 (Deploy) runs on a Windows deployment group that contains the IIS
-# server. It downloads the package and deploys it into the existing "TRS" site.
-# The deployment-group agent must be installed on IS-VBOXX02 with the "IIS" tag.
-#
-# One-time setup on the IIS server:
-#   * Install the ASP.NET Core 7 Hosting Bundle (if not already present).
-#   * Install Web Deploy 3.6+ (required by the IIS Web App Deploy task).
-#   * Register the machine in the Azure DevOps deployment group named below.
-#
-# Override the variables below (or set them in the pipeline UI / a variable
-# group) to match your environment.
+# Requirements on the agent (IS-VBOXX02):
+#   * .NET 7 SDK, or leave the UseDotNet@2 task to install it at runtime.
+#   * The agent service account must be a local administrator (needed to stop/
+#     start the app pool and write to the site folder).
 
 trigger:
   branches:
@@ -29,90 +24,89 @@ trigger:
       - main
       - master
 
+# Run everything on the self-hosted agent that lives on the IIS server.
+pool:
+  name: 'agent_pool_jsr'
+
 variables:
   buildConfiguration: 'Release'
   dotnetVersion: '7.0.x'
-  # Path to the project to publish.
   projectPath: 'TRS.csproj'
-  # --- IIS deployment settings ---
-  deploymentGroupName: 'iis-servers'
-  # Name of the EXISTING IIS website to deploy into (as shown in IIS Manager).
-  iisWebsiteName: 'TRS'
+  publishDir: '$(Build.ArtifactStagingDirectory)\site'
+  # Names exactly as they appear in IIS Manager on IS-VBOXX02.
+  iisSiteName: 'TRS'
+  iisAppPoolName: 'TRS'
 
-stages:
-  - stage: Build
-    displayName: 'Build & package'
-    jobs:
-      - job: Build
-        displayName: 'Publish web deploy package'
-        pool:
-          vmImage: 'windows-latest'
-        steps:
-          - task: UseDotNet@2
-            displayName: 'Install .NET SDK'
-            inputs:
-              packageType: 'sdk'
-              version: '$(dotnetVersion)'
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '$(dotnetVersion)'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Restore'
-            inputs:
-              command: 'restore'
-              projects: '$(projectPath)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore'
+    inputs:
+      command: 'restore'
+      projects: '$(projectPath)'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Build'
-            inputs:
-              command: 'build'
-              projects: '$(projectPath)'
-              arguments: '--configuration $(buildConfiguration) --no-restore'
+  - task: DotNetCoreCLI@2
+    displayName: 'Build'
+    inputs:
+      command: 'build'
+      projects: '$(projectPath)'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # Publish and zip the output so it can be pushed with Web Deploy.
-          - task: DotNetCoreCLI@2
-            displayName: 'Publish'
-            inputs:
-              command: 'publish'
-              publishWebProjects: false
-              projects: '$(projectPath)'
-              arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/site'
-              zipAfterPublish: true
+  # Publish to a plain folder (not zipped) so we can copy it in place.
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      projects: '$(projectPath)'
+      arguments: '--configuration $(buildConfiguration) --no-build --output $(publishDir)'
+      zipAfterPublish: false
+      modifyOutputPath: false
 
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish artifact: drop'
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/site'
-              ArtifactName: 'drop'
+  - task: PowerShell@2
+    displayName: 'Deploy to IIS site (local)'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $ErrorActionPreference = 'Stop'
+        Import-Module WebAdministration
 
-  - stage: Deploy
-    displayName: 'Deploy to IIS'
-    dependsOn: Build
-    condition: succeeded()
-    jobs:
-      - deployment: DeployIIS
-        displayName: 'Deploy to existing TRS site'
-        environment:
-          name: 'production'
-          resourceType: VirtualMachine
-        # Target the Windows deployment group machines that host IIS.
-        pool:
-          name: '$(deploymentGroupName)'
-        strategy:
-          runOnce:
-            deploy:
-              # A deployment job automatically downloads the current pipeline's
-              # artifacts to $(Pipeline.Workspace)/<artifactName>, so no explicit
-              # download task (and no task-version compatibility worries) needed.
-              steps:
-                # Deploy into the existing "TRS" site. No site/app-pool/binding
-                # management here, so the custom app-pool identity, the
-                # https:88 binding and the SSL certificate are left untouched.
-                - task: IISWebAppDeploymentOnMachineGroup@0
-                  displayName: 'Deploy package with Web Deploy'
-                  inputs:
-                    WebSiteName: '$(iisWebsiteName)'
-                    Package: '$(Pipeline.Workspace)/drop/*.zip'
-                    # Keep appsettings/other in-place config from being wiped;
-                    # flip to true only if you want an exact mirror of the build.
-                    RemoveAdditionalFilesFlag: false
-                    # Stop the app during copy to avoid locked-DLL failures.
-                    TakeAppOfflineFlag: true
+        $site    = '$(iisSiteName)'
+        $appPool = '$(iisAppPoolName)'
+        $src     = '$(publishDir)'
+
+        # Resolve the site's real physical path (expands vars like %SystemDrive%).
+        $dest = (Get-Website -Name $site).physicalPath
+        $dest = [System.Environment]::ExpandEnvironmentVariables($dest)
+        Write-Host "Deploying '$src' -> site '$site' at '$dest'"
+
+        if (-not (Test-Path $dest)) { throw "Site physical path not found: $dest" }
+
+        # Stop the dedicated app pool so ASP.NET Core releases its DLLs.
+        if ((Get-WebAppPoolState -Name $appPool).Value -ne 'Stopped') {
+          Write-Host "Stopping app pool '$appPool'..."
+          Stop-WebAppPool -Name $appPool
+          # Wait for it to actually stop before touching files.
+          for ($i = 0; $i -lt 15 -and (Get-WebAppPoolState -Name $appPool).Value -ne 'Stopped'; $i++) {
+            Start-Sleep -Seconds 1
+          }
+        }
+
+        try {
+          # Copy/overwrite published files. No /MIR, so server-specific files
+          # already on the box (e.g. an environment appsettings.json) are kept.
+          # robocopy exit codes 0-7 mean success; 8+ is a real error.
+          robocopy $src $dest /E /R:3 /W:5 /NFL /NDL /NP
+          if ($LASTEXITCODE -ge 8) { throw "robocopy failed with code $LASTEXITCODE" }
+        }
+        finally {
+          Write-Host "Starting app pool '$appPool'..."
+          Start-WebAppPool -Name $appPool
+        }
+
+        Write-Host "Deployment complete."
