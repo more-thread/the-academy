@@ -292,16 +292,27 @@ const darkVars={background:"#171c27",primaryColor:"#222a3a",primaryBorderColor:"
 function currentTheme(){const s=document.documentElement.getAttribute("data-theme");
   return s||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}
 let seq=0;
-let fontsReady=false;
+// Mermaid measures label text to size each node, so the web font must be
+// fully loaded BEFORE rendering — otherwise boxes are sized for the narrower
+// fallback font and the (wider) IBM Plex text overflows/clips once it swaps
+// in. document.fonts.ready alone is not enough: at module-eval time no IBM
+// Plex text has painted yet, so no font request is pending and ready resolves
+// immediately. Force each face to load explicitly first.
+async function ensureFonts(){
+  try{
+    if(document.fonts&&document.fonts.load){
+      await Promise.all([
+        '400 16px "IBM Plex Sans"','500 16px "IBM Plex Sans"',
+        '600 16px "IBM Plex Sans"','700 16px "IBM Plex Sans"',
+        '400 16px "IBM Plex Mono"','500 16px "IBM Plex Mono"','600 16px "IBM Plex Mono"'
+      ].map(f=>document.fonts.load(f)));
+      if(document.fonts.ready){ await document.fonts.ready; }
+    }
+  }catch(e){}
+}
 async function renderAll(){
   if(typeof mermaid==="undefined")return;
-  // Mermaid measures label text to size each node, so the web font must be
-  // loaded first — otherwise boxes are sized for the fallback font and the
-  // (wider) IBM Plex text overflows/clips once it swaps in.
-  if(!fontsReady){
-    try{ if(document.fonts&&document.fonts.ready){ await document.fonts.ready; } }catch(e){}
-    fontsReady=true;
-  }
+  await ensureFonts();
   const dark=currentTheme()==="dark";
   mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",
     fontFamily:"'IBM Plex Sans', sans-serif",themeVariables:dark?darkVars:lightVars,
@@ -456,6 +467,10 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",renderAll);
 else renderAll();
+// Backstop: by the load event the vendored fonts are certainly available, so a
+// re-render here guarantees correct node sizing even if the first pass measured
+// before the font finished loading.
+window.addEventListener("load",()=>{ renderAll(); });
 </script>
 </body>
 </html>
