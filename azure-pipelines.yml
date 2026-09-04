@@ -33,6 +33,8 @@ variables:
   dotnetVersion: '7.0.x'
   projectPath: 'TRS.csproj'
   publishDir: '$(Build.ArtifactStagingDirectory)\site'
+  # Local folder on the server holding the licensed Telerik .nupkg files.
+  telerikFeed: 'C:\agent\jera\packages'
   # Names exactly as they appear in IIS Manager on IS-VBOXX02.
   iisSiteName: 'TRS'
   iisAppPoolName: 'TRS'
@@ -44,14 +46,14 @@ steps:
       packageType: 'sdk'
       version: '$(dotnetVersion)'
 
-  - task: DotNetCoreCLI@2
+  # Restore from nuget.org plus the local folder on the server that holds the
+  # licensed Telerik .nupkg files (e.g. Telerik.UI.for.AspNet.Core.2023.2.606).
+  # Feeds are given inline with --source, so no NuGet.config is needed.
+  - script: >
+      dotnet restore "$(projectPath)"
+      --source "https://api.nuget.org/v3/index.json"
+      --source "$(telerikFeed)"
     displayName: 'Restore'
-    inputs:
-      command: 'restore'
-      projects: '$(projectPath)'
-      # Use the repo NuGet.config so the local Telerik folder feed is included.
-      feedsToUse: 'config'
-      nugetConfigPath: 'NuGet.config'
 
   - task: DotNetCoreCLI@2
     displayName: 'Build'
