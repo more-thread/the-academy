@@ -14,6 +14,9 @@ namespace TRS.Models
         public string TrainingCode { get; set; } 
         [Required]
         public string RegistrationStatus { get; set; }
+        // True once RegistrationStatus has been set explicitly via UpdateRegistrationStatus, so the auto open/close
+        // recalculation stops overriding it. Automatic status changes (create, edit, publish, cancel) reset this to false.
+        public bool IsRegistrationStatusManual { get; set; }
         [Required]
         public string ScheduleStatus { get; set; }
         [Required]

@@ -316,7 +316,8 @@ namespace TRS.Controllers
                 model.Course = await _trainingCourseService.GetTrainingCourseByCode(model.Course.CourseCode);
                 model.TrainingCode = model.Course.CourseCode +"-"+ _globalService.GetDateTime().Year.ToString() + $"-{nextId.ToString("D3")}";
                 model.RegistrationStatus = "CLOSED";
-                model.ScheduleStatus = "DRAFT"; 
+                model.IsRegistrationStatusManual = false;
+                model.ScheduleStatus = "DRAFT";
                 model.ScheduleCreatedBy = auditTrail["UserID"];
                 model.ScheduleCreatedDate = _globalService.GetDateTime();
                 model.CreatedBy = auditTrail["UserID"];
@@ -401,7 +402,10 @@ namespace TRS.Controllers
                 if(_details.ScheduleStatus == "AVAILABLE")
                 {
                     if(_details.ClassSize < registeredCount)
+                    {
                         _details.RegistrationStatus = "OPEN";
+                        _details.IsRegistrationStatusManual = false;
+                    }
                 }
 
                 // update the record
@@ -500,6 +504,7 @@ namespace TRS.Controllers
                 var _logMsg = $"Change in registration status: TrainingSchedule ({_details.TrainingCode}) - from: '{_details.RegistrationStatus}' to: '{paramStatus}'.";
 
                 _details.RegistrationStatus = paramStatus;
+                _details.IsRegistrationStatusManual = true;
                 _details.ScheduleModifiedBy = auditTrail["UserID"];
                 _details.ScheduleModifiedDate = _globalService.GetDateTime();
 
@@ -530,6 +535,7 @@ namespace TRS.Controllers
                 _details.CancellationReason = paramReason;
                 _details.CancellationType = paramCancellationType;
                 _details.RegistrationStatus = "CLOSED";
+                _details.IsRegistrationStatusManual = false;
                 _details.ScheduleStatus = "CANCELLED";
 
                 _details.ScheduleCanceledBy = auditTrail["UserID"];                
@@ -648,6 +654,7 @@ namespace TRS.Controllers
                 var _logMsg = $"Set the training schedule to published: TrainingSchedule ({paramCode})";
 
                 _details.RegistrationStatus = "OPEN";
+                _details.IsRegistrationStatusManual = false;
                 _details.ScheduleStatus = "AVAILABLE";
 
                 // update the record
