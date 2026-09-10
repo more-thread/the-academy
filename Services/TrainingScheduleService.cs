@@ -89,17 +89,18 @@ namespace TRS.Services
                 || (schedule.RegisteredEmployeeCount ?? 0) >= schedule.ClassSize;
         }
 
-        // Keeps RegistrationStatus in sync with the auto-close/auto-open conditions whenever a schedule is loaded, since there's no background job to react to the Start Date passing on its own.
+        // Keeps RegistrationStatus in sync with the auto-close conditions whenever a schedule is loaded, since there's no background job to react to the Start Date passing on its own.
+        // This only ever forces CLOSED (class full, start date reached, or cancelled) and never forces OPEN back, so a manually-set status (open or closed) is never silently overridden.
+        // Manual opening/closing still goes through UpdateRegistrationStatus, which continues to work independently of this recalculation.
         private bool RecalculateRegistrationStatus(TrainingSchedule schedule, DateTime currentDate)
         {
             if (schedule.ScheduleStatus != "AVAILABLE")
                 return false;
 
-            var newStatus = IsRegistrationAutoCloseConditionMet(schedule, currentDate) ? "CLOSED" : "OPEN";
-            if (schedule.RegistrationStatus == newStatus)
+            if (schedule.RegistrationStatus == "CLOSED" || !IsRegistrationAutoCloseConditionMet(schedule, currentDate))
                 return false;
 
-            schedule.RegistrationStatus = newStatus;
+            schedule.RegistrationStatus = "CLOSED";
             return true;
         }
     }
